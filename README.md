@@ -1,2 +1,2 @@
 # big-data-local-setup
-docker compose setup for running big data apps on a arm64 mac
+collection of docker compose setups for  for running big data applications on a arm64 mac
