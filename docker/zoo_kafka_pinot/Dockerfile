@@ -1,0 +1,1 @@
+FROM apachepinot/pinot:latest
