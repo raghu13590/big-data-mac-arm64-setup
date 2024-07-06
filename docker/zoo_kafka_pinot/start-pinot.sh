@@ -13,9 +13,6 @@ docker-compose up -d zookeeper kafka pinot-controller
 echo "Waiting for Zookeeper, Kafka, and Pinot controller to start..."
 sleep 60
 
-# Set up the Pinot cluster
-docker exec -it pinot-controller ./bin/pinot-admin.sh AddCluster -zkAddress zookeeper:2181 -clusterName PinotCluster
-
 # Start the rest of the Pinot services
 docker-compose up -d --build pinot-broker pinot-server pinot-minion
 
@@ -27,15 +24,3 @@ sleep 60
 docker-compose ps
 
 echo "Pinot cluster is initialized and running."
-
-# Add Schema to Pinot
-docker exec -it pinot-controller ./bin/pinot-admin.sh AddSchema \
-    -schemaFile /config/schema.json \
-    -exec
-
-# Add Table to Pinot
-docker exec -it pinot-controller ./bin/pinot-admin.sh AddTable \
-    -tableConfigFile /config/tableConfig.json \
-    -exec
-
-echo "Schema and Table have been added to Pinot."
