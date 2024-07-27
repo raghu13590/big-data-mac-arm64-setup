@@ -1,0 +1,52 @@
+version: '3.8'
+services:
+  pinot-controller:
+    image: apachepinot/pinot:latest
+    container_name: pinot-controller
+    ports:
+      - "9000:9000"
+    command: "StartController -zkAddress zookeeper:2181"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - big-data-network
+
+  pinot-broker:
+    image: apachepinot/pinot:latest
+    container_name: pinot-broker
+    ports:
+      - "8099:8099"
+    command: "StartBroker -zkAddress zookeeper:2181"
+    depends_on:
+      - pinot-controller
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8099/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - big-data-network
+
+  pinot-server:
+    image: apachepinot/pinot:latest
+    container_name: pinot-server
+    ports:
+      - "8098:8098"
+      - "8097:8097"
+    command: "StartServer -zkAddress zookeeper:2181"
+    depends_on:
+      - pinot-broker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8097/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - big-data-network
+
+networks:
+  big-data-network:
+    external: true
