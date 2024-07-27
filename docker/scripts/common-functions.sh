@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Function to get the current timestamp
 timestamp() {
     date +"%Y-%m-%d %H:%M:%S"
