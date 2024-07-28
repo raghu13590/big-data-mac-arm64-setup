@@ -67,7 +67,7 @@ remove_orphan_containers() {
 create_network_if_not_exists() {
     local network_name="$1"
 
-    if ! docker network ls | grep "$network_name" > /dev/null; then
+    if ! docker network ls | grep -w "$network_name" > /dev/null; then
         echo -e "\n$(timestamp) [INFO] Creating Docker network $network_name..."
         docker network create "$network_name"
     fi
@@ -80,7 +80,7 @@ get_network_name() {
     local network_name=$(docker-compose -f "$compose_file" config | awk -v service="$service_name" '
     $0 ~ "services:" { in_services=1 }
     in_services && $0 ~ service { in_service=1 }
-    in_service && $0 ~ "networks:" { getline; print $1; exit }
+    in_service && $0 ~ "networks:" { getline; gsub(":", "", $1); print $1; exit }
     ')
     echo "$network_name"
 }

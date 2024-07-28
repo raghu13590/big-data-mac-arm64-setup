@@ -1,0 +1,57 @@
+services:
+  superset_db:
+    image: postgres:12
+    container_name: superset_db
+    environment:
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: superset
+      POSTGRES_DB: superset
+    volumes:
+      - superset_db_data:/var/lib/postgresql/data
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superset"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  superset_cache:
+    image: redis:latest
+    container_name: superset_cache
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  superset:
+    image: apache/superset:latest
+    container_name: superset
+    environment:
+      SUPERSET_ENV: development
+    ports:
+      - "8088:8088"
+    volumes:
+      - superset_home:/app/superset_home
+      - ./superset_config.py:/app/pythonpath/superset_config.py
+    depends_on:
+      - superset_db
+      - superset_cache
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8088/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  superset_db_data:
+  superset_home:
+
+networks:
+  big-data-network:
+    external: true
