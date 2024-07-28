@@ -14,7 +14,14 @@ generate_secret_key() {
 # Function to create the superset configuration file
 create_superset_config() {
     local secret_key=$1
-    cat > "$SCRIPT_DIR/../scripts/superset_config.py" <<EOL
+    local config_dir="$SCRIPT_DIR/../service-data/superset/configs"
+    local config_file="$config_dir/superset_config.py"
+
+    # Ensure the configuration directory exists
+    mkdir -p "$config_dir"
+
+    # Create the superset configuration file with the new secret key
+    cat > "$config_file" <<EOL
 # Superset configuration file
 SECRET_KEY = '${secret_key}'
 ROW_LIMIT = 5000

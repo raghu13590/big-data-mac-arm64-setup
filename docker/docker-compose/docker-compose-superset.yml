@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: superset
       POSTGRES_DB: superset
     volumes:
-      - superset_db_data:/var/lib/postgresql/data
+      - ../service-data/superset/volumes/superset_db_data:/var/lib/postgresql/data
     networks:
       - big-data-network
     healthcheck:
@@ -35,8 +35,8 @@ services:
     ports:
       - "8088:8088"
     volumes:
-      - superset_home:/app/superset_home
-      - ./superset_config.py:/app/pythonpath/superset_config.py
+      - ../service-data/superset/volumes/superset_home:/app/superset_home
+      - ../service-data/superset/configs/superset_config.py:/app/pythonpath/superset_config.py
     depends_on:
       - superset_db
       - superset_cache
