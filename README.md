@@ -1,10 +1,10 @@
 # Big Data Mac ARM64 Setup
 
-This project sets up a big data environment on a Mac with ARM64 architecture using Docker. It includes scripts to manage and run Zookeeper, Pinot, and Superset services.
+This project sets up a big data environment on a Mac with ARM64 architecture using Docker. It includes scripts to manage and run Zookeeper, Pinot, Superset, and ZooNavigator services.
 
 ## Overview
 
-This project provides a streamlined way to set up and manage a big data environment. It includes Docker Compose files for setting up Zookeeper, Pinot, and Superset, along with shell scripts to manage these services, ensuring they run correctly and efficiently.
+This project provides a streamlined way to set up and manage a big data environment. It includes Docker Compose files for setting up Zookeeper, Pinot, Superset, and ZooNavigator, and shell scripts to manage these services, ensuring they run correctly and efficiently.
 
 ### Features
 
@@ -56,6 +56,16 @@ This script will start the Superset service, generate a random secret key, and e
 ./docker/scripts/run-superset.sh
 ```
 Once the services are up and running, you can access Apache Superset at http://localhost:8088.
+
+### 3.4. To start ZooNavigator, run:
+This script will start the ZooNavigator service and ensure it is running and healthy.
+```sh
+./docker/scripts/run-zoonavigator.sh
+```
+Open ZooNavigator in your browser at http://localhost:9001.
+
+    •	Enter the Zookeeper connection string as zookeeper:2181.
+    •	Save and connect.
 
 ## Additional Information
 
