@@ -4,9 +4,13 @@ services:
     container_name: zookeeper
     ports:
       - "2181:2181"
+      - "8080:8080"  # Admin UI port
     environment:
       ALLOW_ANONYMOUS_LOGIN: "yes"
       ZOO_4LW_COMMANDS_WHITELIST: "srvr,ruok"
+    volumes:
+      - ../service-data/zookeeper/configs/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
+      - ../service-data/zookeeper/volumes/data:/data
     healthcheck:
       test: ["CMD", "sh", "-c", "echo ruok | nc localhost 2181 | grep imok"]
       interval: 30s

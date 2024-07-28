@@ -42,6 +42,8 @@ This script will start the Zookeeper service and ensure it is running and health
 ```sh
 ./docker/scripts/run-zookeeper.sh
 ```
+Once Zookeeper is running, you can access the Zookeeper Admin UI for managing and monitoring at http://localhost:8080/commands. 
+Use the available links to navigate to different commands like monitor, stat, conf, etc.
 
 ### 3.2. To start Pinot, run:
 This script will start the Pinot controller, broker, and server services, ensuring they are running and healthy.
