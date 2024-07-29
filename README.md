@@ -1,6 +1,6 @@
 # Big Data Mac ARM64 Setup
 
-This project sets up a big data environment on a Mac with ARM64 architecture using Docker. It includes scripts to manage and run Zookeeper, Kafka, Pinot, Superset, and ZooNavigator services.
+This project sets up a big data environment on a Mac with ARM64 architecture using Docker. It includes scripts to manage and run Zookeeper, Kafka, AKHQ(a GUI for Kafka), Pinot, Superset, and ZooNavigator services.
 
 ## Overview
 
@@ -51,21 +51,28 @@ This script will start the Kafka service and ensure it is running and healthy.
 ./docker/scripts/run-kafka.sh
 ```
 
-### 3.3. To start Pinot, run:
+### 3.3. To start AKHQ (Kafka UI), run:
+This script will start the AKHQ service and ensure it is running and healthy. AKHQ is a UI for managing and monitoring Apache Kafka clusters. It provides a user-friendly interface to manage topics, consumer groups, and other Kafka resources.
+```sh
+./docker/scripts/run-akhq.sh
+```
+Once the service is up and running, you can access AKHQ at http://localhost:9093.
+
+### 3.4. To start Pinot, run:
 This script will start the Pinot controller, broker, and server services, ensuring they are running and healthy.
 ```sh
 ./docker/scripts/run-pinot.sh
 ```
 Once the services are up and running, you can access Apache Pinot at http://localhost:9000.
 
-### 3.4. To start Superset, run:
+### 3.5. To start Superset, run:
 This script will start the Superset service, generate a random secret key, and ensure the service is running and healthy.
 ```sh
 ./docker/scripts/run-superset.sh
 ```
 Once the services are up and running, you can access Apache Superset at http://localhost:8088.
 
-### 3.5. To start ZooNavigator, run:
+### 3.6. To start ZooNavigator, run:
 This script will start the ZooNavigator service and ensure it is running and healthy.
 ```sh
 ./docker/scripts/run-zoonavigator.sh
