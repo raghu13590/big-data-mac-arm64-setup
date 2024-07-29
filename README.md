@@ -1,10 +1,10 @@
 # Big Data Mac ARM64 Setup
 
-This project sets up a big data environment on a Mac with ARM64 architecture using Docker. It includes scripts to manage and run Zookeeper, Pinot, Superset, and ZooNavigator services.
+This project sets up a big data environment on a Mac with ARM64 architecture using Docker. It includes scripts to manage and run Zookeeper, Kafka, Pinot, Superset, and ZooNavigator services.
 
 ## Overview
 
-This project provides a streamlined way to set up and manage a big data environment. It includes Docker Compose files for setting up Zookeeper, Pinot, Superset, and ZooNavigator, and shell scripts to manage these services, ensuring they run correctly and efficiently.
+This project provides a streamlined way to set up and manage a big data environment. It includes Docker Compose files for setting up Zookeeper, Kafka, Pinot, Superset, and ZooNavigator, and shell scripts to manage these services, ensuring they run correctly and efficiently.
 
 ### Features
 
@@ -45,21 +45,27 @@ This script will start the Zookeeper service and ensure it is running and health
 Once Zookeeper is running, you can access the Zookeeper Admin UI for managing and monitoring at http://localhost:8080/commands. 
 Use the available links to navigate to different commands like monitor, stat, conf, etc.
 
-### 3.2. To start Pinot, run:
+### 3.2. To start Kafka, run:
+This script will start the Kafka service and ensure it is running and healthy.
+```sh
+./docker/scripts/run-kafka.sh
+```
+
+### 3.3. To start Pinot, run:
 This script will start the Pinot controller, broker, and server services, ensuring they are running and healthy.
 ```sh
 ./docker/scripts/run-pinot.sh
 ```
 Once the services are up and running, you can access Apache Pinot at http://localhost:9000.
 
-### 3.3. To start Superset, run:
+### 3.4. To start Superset, run:
 This script will start the Superset service, generate a random secret key, and ensure the service is running and healthy.
 ```sh
 ./docker/scripts/run-superset.sh
 ```
 Once the services are up and running, you can access Apache Superset at http://localhost:8088.
 
-### 3.4. To start ZooNavigator, run:
+### 3.5. To start ZooNavigator, run:
 This script will start the ZooNavigator service and ensure it is running and healthy.
 ```sh
 ./docker/scripts/run-zoonavigator.sh
