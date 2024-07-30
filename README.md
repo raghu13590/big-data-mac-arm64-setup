@@ -1,10 +1,10 @@
 # Big Data Mac ARM64 Setup
 
-This project sets up a big data environment on a Mac with ARM64 architecture using Docker. It includes scripts to manage and run Zookeeper, Kafka, AKHQ(a GUI for Kafka), Pinot, Superset, and ZooNavigator services.
+This project sets up a big data environment on a Mac with ARM64 architecture using Docker. It includes scripts to manage and run Zookeeper, Kafka, AKHQ (a GUI for Kafka), Pinot, Superset, ZooNavigator, and Spark services.
 
 ## Overview
 
-This project provides a streamlined way to set up and manage a big data environment. It includes Docker Compose files for setting up Zookeeper, Kafka, Pinot, Superset, and ZooNavigator, and shell scripts to manage these services, ensuring they run correctly and efficiently.
+This project provides a streamlined way to set up and manage a big data environment. It includes Docker Compose files for setting up Zookeeper, Kafka, Pinot, Superset, ZooNavigator, and Apache Spark, along with shell scripts to manage these services, ensuring they run correctly and efficiently.
 
 ### Features
 
@@ -81,6 +81,13 @@ Open ZooNavigator in your browser at http://localhost:9001.
 
     •	Enter the Zookeeper connection string as zookeeper:2181.
     •	Save and connect.
+
+### 3.7. To start Spark, run:
+This script will start the Spark master and worker services and ensure they are running and healthy.
+```sh
+./docker/scripts/run-spark.sh
+```
+Once the services are up and running, you can access the Spark Master UI at http://localhost:8082 and the Spark Worker UI at http://localhost:8083.
 
 ## Additional Information
 
