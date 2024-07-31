@@ -1,10 +1,10 @@
 # Big Data Mac ARM64 Setup
 
-This project sets up a big data environment on a Mac with ARM64 architecture using Docker. It includes scripts to manage and run Zookeeper, Kafka, AKHQ (a GUI for Kafka), Pinot, Superset, ZooNavigator, and Spark services.
+This project sets up a big data environment on a Mac with ARM64 architecture using Docker. It includes scripts to manage and run Zookeeper, Kafka, AKHQ (a GUI for Kafka), Pinot, Superset, ZooNavigator, Spark, and Flink services.
 
 ## Overview
 
-This project provides a streamlined way to set up and manage a big data environment. It includes Docker Compose files for setting up Zookeeper, Kafka, Pinot, Superset, ZooNavigator, and Apache Spark, along with shell scripts to manage these services, ensuring they run correctly and efficiently.
+This project provides a streamlined way to set up and manage a big data environment. It includes Docker Compose files for setting up Zookeeper, Kafka, Pinot, Superset, ZooNavigator, Spark, and Flink, along with shell scripts to manage these services, ensuring they run correctly and efficiently.
 
 ### Features
 
@@ -88,6 +88,13 @@ This script will start the Spark master and worker services and ensure they are 
 ./docker/scripts/run-spark.sh
 ```
 Once the services are up and running, you can access the Spark Master UI at http://localhost:8082 and the Spark Worker UI at http://localhost:8083.
+
+### 3.8. To start Flink, run:
+This script will start the Flink job manager and task manager services and ensure they are running and healthy.
+```sh
+./docker/scripts/run-flink.sh
+```
+Once the services are up and running, you can access the Flink Job Manager UI at http://localhost:8084.
 
 ## Additional Information
 

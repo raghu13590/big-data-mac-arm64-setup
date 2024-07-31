@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  jobmanager:
+    image: flink:latest
+    container_name: flink-jobmanager
+    ports:
+      - "8084:8081"
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+    command: jobmanager
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - flink_jobmanager_data:/opt/flink
+    networks:
+      - big-data-network
+
+  taskmanager:
+    image: flink:latest
+    container_name: flink-taskmanager
+    depends_on:
+      - jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+    command: taskmanager
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - flink_taskmanager_data:/opt/flink
+    networks:
+      - big-data-network
+
+volumes:
+  flink_jobmanager_data:
+    driver: local
+  flink_taskmanager_data:
+    driver: local
+
+networks:
+  big-data-network:
+    external: true
