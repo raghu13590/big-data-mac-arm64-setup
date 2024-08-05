@@ -12,6 +12,12 @@ services:
       - "8082:8080" # Spark Master UI on port 8082
     networks:
       - big-data-network
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import urllib.request as urllib; import json; res = urllib.urlopen(\"http://localhost:8080/json/\"); data = json.load(res); exit(0) if data[\"status\"] == \"ALIVE\" else exit(1)'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s # Add a delay before the first health check
 
   spark-worker:
     image: bitnami/spark:latest
@@ -31,6 +37,12 @@ services:
       - "8083:8081" # Spark Worker UI on port 8083
     networks:
       - big-data-network
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import urllib.request as urllib; import json; res = urllib.urlopen(\"http://localhost:8081/json/\"); data = json.load(res); exit(0) if \"cores\" in data else exit(1)'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s # Add a delay before the first health check
 
 networks:
   big-data-network:
