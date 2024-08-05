@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   jobmanager:
     image: flink:latest
@@ -33,7 +31,7 @@ services:
         taskmanager.numberOfTaskSlots: 2
     command: taskmanager
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8081 || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://jobmanager:8081/taskmanagers | grep 'taskmanagers' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
