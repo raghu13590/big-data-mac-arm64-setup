@@ -56,10 +56,12 @@ verify_service() {
 
 # Function to remove orphan containers
 remove_orphan_containers() {
-    local orphans=$(docker ps -aq -f status=exited)
-    if [ ! -z "$orphans" ]; then
+    local project_name="$1"
+    local orphan_containers=$(docker ps -a --filter "label=com.docker.compose.project=$project_name" --filter "status=exited" --format "{{.ID}}")
+
+    if [ ! -z "$orphan_containers" ]; then
         echo -e "\n$(timestamp) [INFO] Removing orphan containers..."
-        docker rm $orphans
+        docker rm $orphan_containers
     fi
 }
 
@@ -108,6 +110,7 @@ restart_service() {
     local compose_file="$2"
     local service_container="$3"
     local dependent_service_name="$4"
+    local project_name=$(docker-compose -f "$compose_file" config --services | head -n 1)
 
     check_docker_running
     validate_compose_file "$compose_file"
@@ -126,7 +129,7 @@ restart_service() {
     create_network_if_not_exists "$network_name"
 
     # Remove orphan containers
-    remove_orphan_containers
+    remove_orphan_containers "$project_name"
 
     if is_running "$service_container"; then
         echo -e "\n$(timestamp) [INFO] $service_name is already running."
