@@ -2,6 +2,7 @@ services:
   pinot-controller:
     image: apachepinot/pinot:latest
     container_name: pinot-controller
+    hostname: pinot-controller
     ports:
       - "9000:9000"
     command: "StartController -zkAddress zookeeper:2181"
@@ -16,6 +17,7 @@ services:
   pinot-broker:
     image: apachepinot/pinot:latest
     container_name: pinot-broker
+    hostname: pinot-broker
     ports:
       - "8099:8099"
     command: "StartBroker -zkAddress zookeeper:2181"
@@ -32,6 +34,7 @@ services:
   pinot-server:
     image: apachepinot/pinot:latest
     container_name: pinot-server
+    hostname: pinot-server
     ports:
       - "8098:8098"
       - "8097:8097"
@@ -40,6 +43,23 @@ services:
       - pinot-broker
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8097/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - big-data-network
+
+  pinot-minion:
+    image: apachepinot/pinot:latest
+    container_name: pinot-minion
+    hostname: pinot-minion
+    ports:
+      - "9514:9514"
+    command: "StartMinion -zkAddress zookeeper:2181"
+    depends_on:
+      - pinot-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9514/health"]
       interval: 30s
       timeout: 10s
       retries: 5
