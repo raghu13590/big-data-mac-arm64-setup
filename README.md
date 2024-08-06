@@ -94,6 +94,10 @@ This script will start the Flink job manager and task manager services and ensur
 ```sh
 ./docker/scripts/run-flink.sh
 ```
+To run Flink with flame graphs, use the following command:
+```sh
+./docker/scripts/run-flink-flamegraph.sh
+```
 Once the services are up and running, you can access the Flink Job Manager UI at http://localhost:8084.
 
 ## Additional Information
