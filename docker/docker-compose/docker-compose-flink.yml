@@ -28,7 +28,7 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 2
+        taskmanager.numberOfTaskSlots: 20
     command: taskmanager
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://jobmanager:8081/taskmanagers | grep 'taskmanagers' || exit 1"]
