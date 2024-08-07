@@ -20,13 +20,34 @@ create_superset_config() {
     # Ensure the configuration directory exists
     mkdir -p "$config_dir"
 
-    # Create the superset configuration file with the new secret key
+    # Create the superset configuration file with the new secret key and Pinot configuration
     cat > "$config_file" <<EOL
 # Superset configuration file
 SECRET_KEY = '${secret_key}'
 ROW_LIMIT = 5000
 SUPERSET_WEBSERVER_PORT = 8088
+
+# Database configuration
+SQLALCHEMY_DATABASE_URI = 'postgresql://superset:superset@superset_db:5432/superset'
+
+# Pinot configuration
+from pinotdb.sqlalchemy import PinotDialect
+ADDITIONAL_DATABASES = {
+    'apache_pinot': {
+        'NAME': 'Apache Pinot',
+        'URI': 'pinot://pinot-broker:8099/query?controller=http://pinot-controller:9000/',
+        'BACKEND': 'superset.db_engine_specs.pinot.PinotEngineSpec',
+    }
+}
+
+# Additional configurations can be added here
 EOL
+}
+
+# Function to install PinotDB connector in the Superset container
+install_pinot_connector() {
+    echo -e "\n$(timestamp) [INFO] Installing PinotDB connector in the Superset container..."
+    docker exec -it superset pip install pinotdb
 }
 
 # Function to restart services
@@ -58,11 +79,14 @@ initialize_superset() {
 # Generate a new secret key
 SECRET_KEY=$(generate_secret_key)
 
-# Create the superset configuration file with the new secret key
+# Create the superset configuration file with the new secret key and Pinot configuration
 create_superset_config "$SECRET_KEY"
 
 # Restart Superset services
 restart_services
+
+# Install PinotDB connector in the Superset container
+install_pinot_connector
 
 # Initialize the database and create an admin user if not exists
 initialize_superset

@@ -20,7 +20,7 @@ services:
     hostname: pinot-broker
     ports:
       - "8099:8099"
-    command: "StartBroker -zkAddress zookeeper:2181"
+    command: "StartBroker -zkAddress zookeeper:2181 -brokerHost pinot-broker -brokerPort 8099"
     depends_on:
       - pinot-controller
     healthcheck:
