@@ -10,6 +10,9 @@ services:
       - SPARK_SSL_ENABLED=no
     ports:
       - "8082:8080" # Spark Master UI on port 8082
+    volumes:
+      - ../service-data/spark/configs:/opt/bitnami/spark/conf
+      - ../service-data/spark/volumes:/opt/bitnami/spark/data
     networks:
       - big-data-network
     healthcheck:
@@ -35,6 +38,9 @@ services:
       - spark-master
     ports:
       - "8083:8081" # Spark Worker UI on port 8083
+    volumes:
+      - ../service-data/spark/configs:/opt/bitnami/spark/conf
+      - ../service-data/spark/volumes:/opt/bitnami/spark/data
     networks:
       - big-data-network
     healthcheck:
