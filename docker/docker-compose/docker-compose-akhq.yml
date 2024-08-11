@@ -3,17 +3,18 @@ services:
     image: tchiotludo/akhq:latest
     container_name: akhq
     ports:
-      - "9093:9093"
+      - "9093:9093"  # Port for accessing AKHQ
     volumes:
-      - ../service-data/akhq/configs/application.yml:/app/application.yml
+      - ../service-data/akhq/configs/application.yml:/app/application.yml  # Mount the AKHQ configuration file
+      - ../service-data/akhq/volumes:/app/volumes  # Mount additional volumes if needed
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9093/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      test: ["CMD-SHELL", "curl -f http://localhost:9093/ || exit 1"]  # Health check to ensure AKHQ is running
+      interval: 30s  # Health check interval
+      timeout: 10s  # Health check timeout
+      retries: 5  # Health check retries
     networks:
-      - big-data-network
+      - big-data-network  # Attach AKHQ to the big-data-network
 
 networks:
   big-data-network:
-    external: true
+    external: true  # Ensure the network is externally managed
