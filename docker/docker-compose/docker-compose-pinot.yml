@@ -6,6 +6,9 @@ services:
     ports:
       - "9000:9000"
     command: "StartController -zkAddress zookeeper:2181"
+    volumes:
+      - ../service-data/pinot/configs/controller:/opt/pinot/config  # Configuration files for the controller
+      - ../service-data/pinot/volumes/controller-data:/data          # Data storage for the controller
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
       interval: 30s
@@ -21,6 +24,9 @@ services:
     ports:
       - "8099:8099"
     command: "StartBroker -zkAddress zookeeper:2181 -brokerHost pinot-broker -brokerPort 8099"
+    volumes:
+      - ../service-data/pinot/configs/broker:/opt/pinot/config  # Configuration files for the broker
+      - ../service-data/pinot/volumes/broker-data:/data          # Data storage for the broker
     depends_on:
       - pinot-controller
     healthcheck:
@@ -39,6 +45,9 @@ services:
       - "8098:8098"
       - "8097:8097"
     command: "StartServer -zkAddress zookeeper:2181"
+    volumes:
+      - ../service-data/pinot/configs/server:/opt/pinot/config  # Configuration files for the server
+      - ../service-data/pinot/volumes/server-data:/data          # Data storage for the server
     depends_on:
       - pinot-broker
     healthcheck:
@@ -56,6 +65,9 @@ services:
     ports:
       - "9514:9514"
     command: "StartMinion -zkAddress zookeeper:2181"
+    volumes:
+      - ../service-data/pinot/configs/minion:/opt/pinot/config  # Configuration files for the minion
+      - ../service-data/pinot/volumes/minion-data:/data          # Data storage for the minion
     depends_on:
       - pinot-server
     healthcheck:
