@@ -15,27 +15,14 @@ mkdir -p "$AKHQ_CONFIG_DIR"
 
 # Create the application.yml file with required configurations
 cat > "$AKHQ_CONFIG_FILE" <<EOL
+micronaut:
+  server:
+    port: 9093
 akhq:
   connections:
-    kafka-cluster-1:
+    docker-kafka-server:
       properties:
-        bootstrap.servers: "localhost:9092"
-      schema-registry: "http://localhost:8081"
-  security:
-    default-group: admin
-    groups:
-      admin:
-        roles:
-          - topic/read
-          - topic/insert
-          - topic/delete
-          - group/read
-          - group/delete
-          - node/read
-          - topic/config/update
-          - group/config/update
-          - acls/read
-          - acls/update
+        bootstrap.servers: "kafka:9092"
 EOL
 
 # Start Kafka
