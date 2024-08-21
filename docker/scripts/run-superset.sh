@@ -44,12 +44,6 @@ ADDITIONAL_DATABASES = {
 EOL
 }
 
-# Function to install PinotDB connector in the Superset container
-install_pinot_connector() {
-    echo -e "\n$(timestamp) [INFO] Installing PinotDB connector in the Superset container..."
-    docker exec -it superset pip install pinotdb
-}
-
 # Function to restart services
 restart_services() {
     restart_service "superset_db" "$SCRIPT_DIR/../docker-compose/docker-compose-superset.yml" "superset_db"
@@ -84,9 +78,6 @@ create_superset_config "$SECRET_KEY"
 
 # Restart Superset services
 restart_services
-
-# Install PinotDB connector in the Superset container
-install_pinot_connector
 
 # Initialize the database and create an admin user if not exists
 initialize_superset
