@@ -6,11 +6,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Source common functions
 source "$SCRIPT_DIR/common-functions.sh"
 
-# Start Kafka
-"$SCRIPT_DIR/run-kafka.sh"
+# Restart Zookeeper if it's not running
+"$SCRIPT_DIR/run-zookeeper.sh"
 
-# Verify if Kafka is running
-verify_service "kafka"
+# Verify if Zookeeper is running
+verify_service "zookeeper"
 
 # Restart Spark services if they are not running
 restart_service "spark-master" "$SCRIPT_DIR/../docker-compose/docker-compose-spark.yml" "spark-master"

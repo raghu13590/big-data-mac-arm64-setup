@@ -29,11 +29,11 @@ if [ "$1" == "--enable-flamegraph" ]; then
   echo "rest.flamegraph.enabled: true" >> "$FLINK_CONFIG_FILE"
 fi
 
-# Start Kafka
-"$SCRIPT_DIR/run-kafka.sh"
+# Restart Zookeeper if it's not running
+"$SCRIPT_DIR/run-zookeeper.sh"
 
-# Verify if Kafka is running
-verify_service "kafka"
+# Verify if Zookeeper is running
+verify_service "zookeeper"
 
 # Restart Flink Job Manager service if it's not running
 restart_service "jobmanager" "$SCRIPT_DIR/../docker-compose/docker-compose-flink.yml" "flink-jobmanager"
