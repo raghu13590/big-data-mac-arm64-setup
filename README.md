@@ -100,6 +100,13 @@ To run Flink with flame graphs, use the following command:
 ```
 Once the services are up and running, you can access the Flink Job Manager UI at http://localhost:8084.
 
+### 3.9. To start the Kafka Producer, run:
+This script will start the Kafka Producer service, which continuously sends messages to a specified Kafka topic.
+Add .txt files with messages you'd like to send to the topic in the `docker/service-data/kafkaproducer/messages` folder. You can also modify each message by replacing the text in .txt files.
+```sh
+./docker/scripts/run-kafkaproducer.sh
+```
+
 ## Additional Information
 
 	•	Health Checks: The scripts include health checks to ensure that services are running correctly.

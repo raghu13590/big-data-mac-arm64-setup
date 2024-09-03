@@ -1,0 +1,22 @@
+services:
+  kafkaproducer:
+    container_name: kafkaproducer
+    ports:
+      - "8085:8085"
+    build:
+      context: ..
+      dockerfile: dockerfile/kafkaproducer
+    volumes:
+      - ../service-data/kafkaproducer:/app/data
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'python /app/kafkaproducer.py' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s # Add a delay before the first health check
+
+networks:
+  big-data-network:
+    external: true

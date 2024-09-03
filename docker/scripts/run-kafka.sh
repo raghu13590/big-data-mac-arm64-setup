@@ -14,3 +14,6 @@ verify_service "zookeeper"
 
 # Restart Kafka service if it's not running
 restart_service "kafka" "$SCRIPT_DIR/../docker-compose/docker-compose-kafka.yml" "kafka"
+
+# Verify if Kafka is running
+verify_service "kafka"
