@@ -88,6 +88,16 @@ This script will start the Spark master and worker services and ensure they are 
 ./docker/scripts/run-spark.sh
 ```
 Once the services are up and running, you can access the Spark Master UI at http://localhost:8082 and the Spark Worker UI at http://localhost:8083.
+Place your Spark job JAR files in the `docker/service-data/spark/jobs` folder and data files in the `docker/service-data/spark/data` folder.
+To run a Spark job, use the following command:
+```sh
+docker exec -it spark-master /opt/bitnami/spark/bin/spark-submit \
+    --class com.abc.MainClassName \
+    --executor-memory 1G \
+    --total-executor-cores 1 \
+    /opt/bitnami/spark/custom-jars/jarname.jar
+```
+
 
 ### 3.8. To start Flink, run:
 This script will start the Flink job manager and task manager services and ensure they are running and healthy.

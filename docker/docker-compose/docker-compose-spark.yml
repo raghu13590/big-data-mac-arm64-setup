@@ -12,7 +12,8 @@ services:
       - "8082:8080" # Spark Master UI on port 8082
     volumes:
       - ../service-data/spark/configs:/opt/bitnami/spark/conf
-      - ../service-data/spark/volumes:/opt/bitnami/spark/data
+      - ../service-data/spark/volumes/jars:/opt/bitnami/spark/custom-jars
+      - ../service-data/spark/volumes/data:/opt/bitnami/spark/data
     networks:
       - big-data-network
     healthcheck:
