@@ -92,6 +92,7 @@ Place your Spark job JAR files in the `docker/service-data/spark/jobs` folder an
 To run a Spark job, use the following command:
 ```sh
 docker exec -it spark-master /opt/bitnami/spark/bin/spark-submit \
+    --master spark://spark-master:7077 \
     --class com.abc.MainClassName \
     --executor-memory 1G \
     --total-executor-cores 1 \
