@@ -1,0 +1,49 @@
+services:
+  hadoop-namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-namenode
+    platform: linux/amd64
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+    ports:
+      - "9870:9870"  # NameNode Web UI
+    volumes:
+      - ./hadoop/nn:/hadoop/dfs/name
+    networks:
+      - big-data-network
+
+  hadoop-datanode-1:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-datanode-1
+    platform: linux/amd64
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+      - NAMENODE_HOST=hadoop-namenode
+    ports:
+      - "9864:9864"  # DataNode Web UI
+    volumes:
+      - ./hadoop/dn1:/hadoop/dfs/data
+    networks:
+      - big-data-network
+    depends_on:
+      - hadoop-namenode
+
+  hadoop-datanode-2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-datanode-2
+    platform: linux/amd64
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+      - NAMENODE_HOST=hadoop-namenode
+    ports:
+      - "9865:9864"  # DataNode Web UI
+    volumes:
+      - ./hadoop/dn2:/hadoop/dfs/data
+    networks:
+      - big-data-network
+    depends_on:
+      - hadoop-namenode
+
+networks:
+  big-data-network:
+    external: true
