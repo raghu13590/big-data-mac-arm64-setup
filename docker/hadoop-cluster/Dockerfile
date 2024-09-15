@@ -19,12 +19,15 @@ WORKDIR /root
 # Install required packages
 RUN apt-get -q update && \
     apt-get -q install -y --no-install-recommends \
+        wget \
+        gnupg \
+        software-properties-common \
+        lsb-release \
         python3 \
         git \
         maven \
         openjdk-11-jdk \
         curl \
-        gnupg \
         ca-certificates \
         autoconf \
         automake \
@@ -36,8 +39,6 @@ RUN apt-get -q update && \
         libffi-dev \
         libxml2-dev \
         libxslt1-dev \
-        protobuf-compiler \
-        libprotobuf-dev \
         locales \
         libsnappy-dev \
         libbz2-dev \
@@ -52,7 +53,15 @@ RUN apt-get -q update && \
         make \
         pkg-config \
         libtirpc-dev \
-    && apt-get clean && \
+        libsasl2-dev \
+        libgsasl7-dev \
+        protobuf-compiler \
+        libprotobuf-dev \
+        pmdk-tools \
+        libpmem-dev \
+        cmake \
+        nasm && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Set locale
@@ -61,33 +70,43 @@ RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 ENV PYTHONIOENCODING=utf-8
 
+# Install ISA-L from source
+RUN git clone https://github.com/intel/isa-l.git /isa-l-src && \
+    cd /isa-l-src && \
+    ./autogen.sh && \
+    ./configure --prefix=/usr && \
+    make -j$(nproc) && \
+    make install && \
+    rm -rf /isa-l-src
+
 # Set environment variables required to build Hadoop
 ENV MAVEN_HOME=/usr/share/maven
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64
 
 # Avoid out of memory errors in builds
-ENV MAVEN_OPTS="-Xms512m -Xmx4096m"
+ENV MAVEN_OPTS="-Xms512m -Xmx8192m"
 
-# Skip gpg verification when downloading Yetus via yetus-wrapper
-ENV HADOOP_SKIP_YETUS_VERIFICATION=true
-
-# Build Hadoop from source
+# Build Hadoop from source with enhanced logging
 ENV HADOOP_VERSION=3.3.6
 
 RUN git clone https://github.com/apache/hadoop.git /hadoop-src && \
     cd /hadoop-src && \
-    git checkout rel/release-$HADOOP_VERSION
-
-# Exclude native components to avoid the need for CMake
-RUN sed -i 's/<native>//g' /hadoop-src/pom.xml && \
-    sed -i 's#</native>##g' /hadoop-src/pom.xml
-
-# Build Hadoop without native components and extract the distribution
-RUN cd /hadoop-src && \
-    mvn package -Pdist -DskipTests -Dmaven.javadoc.skip=true -Dtar \
+    git checkout rel/release-$HADOOP_VERSION && \
+    mvn clean package -Pdist,native -DskipTests -Dtar -Dmaven.javadoc.skip=true \
+        -X \
+        -Dcmake.args="-DNO_PROTOC=1 -DNO_FUSE=1 -DNO_LIBWEBHDFS=1 -DNO_SASL=1" \
+        -Dskip.nativetest=true \
+        -Drequire.openssl=true \
+        -Drequire.snappy=true \
+        -Drequire.zstd=true \
+        -Drequire.lz4=true \
+        -Drequire.bzip2=true \
+        -Drequire.isal=true \
+        -Drequire.pmdk=true \
+        -pl '!hadoop-hdfs-project/hadoop-hdfs-native-client' \
         -pl '!hadoop-yarn-project/hadoop-yarn/hadoop-yarn-applications/hadoop-yarn-applications-catalog/hadoop-yarn-applications-catalog-webapp' && \
-    tar -xzf hadoop-dist/target/hadoop-$HADOOP_VERSION.tar.gz -C /opt/ && \
-    rm -rf /hadoop-src
+    mkdir -p /opt/hadoop-$HADOOP_VERSION && \
+    cp -r /hadoop-src/hadoop-dist/target/hadoop-$HADOOP_VERSION/* /opt/hadoop-$HADOOP_VERSION
 
 # Set HADOOP_HOME to the extracted directory
 ENV HADOOP_HOME=/opt/hadoop-$HADOOP_VERSION
