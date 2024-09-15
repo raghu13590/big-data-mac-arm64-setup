@@ -12,6 +12,7 @@ services:
       - "9000:9000"  # HDFS RPC
     volumes:
       - ./data/hadoop/namenode:/hadoop_data/hdfs/namenode
+      - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount configs directory
     command: ["hdfs", "namenode"]
     networks:
       - hadoop
@@ -25,6 +26,7 @@ services:
       - HDFS_CONF_dfs_datanode_data_dir=file:///hadoop_data/hdfs/datanode
     volumes:
       - ./data/hadoop/datanode:/hadoop_data/hdfs/datanode
+      - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount configs directory
     depends_on:
       - hadoop-namenode
     command: ["hdfs", "datanode"]
@@ -38,8 +40,15 @@ services:
     environment:
       - YARN_CONF_yarn_resourcemanager_hostname=yarn-resourcemanager
       - CORE_CONF_fs_defaultFS=hdfs://hadoop-namenode:9000
+      - YARN_CONF_yarn_log_aggregation_enable=true
+      - YARN_CONF_yarn_resourcemanager_address=yarn-resourcemanager:8032
+      - YARN_CONF_yarn_nodemanager_resource_memory_mb=4096
+      - YARN_CONF_yarn_scheduler_maximum_allocation_mb=4096
+      - YARN_CONF_yarn_scheduler_minimum_allocation_mb=1024
     ports:
       - "8088:8088"  # ResourceManager Web UI
+    volumes:
+      - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount configs directory
     depends_on:
       - hadoop-namenode
     command: ["yarn", "resourcemanager"]
@@ -53,6 +62,14 @@ services:
     environment:
       - YARN_CONF_yarn_resourcemanager_hostname=yarn-resourcemanager
       - CORE_CONF_fs_defaultFS=hdfs://hadoop-namenode:9000
+      - YARN_CONF_yarn_nodemanager_resource_memory_mb=4096
+      - YARN_CONF_yarn_scheduler_maximum_allocation_mb=4096
+      - YARN_CONF_yarn_scheduler_minimum_allocation_mb=1024
+      - MAPRED_CONF_mapreduce_framework_name=yarn
+      - MAPRED_CONF_mapreduce_jobhistory_address=localhost:10020
+      - MAPRED_CONF_mapreduce_jobhistory_webapp_address=localhost:19888
+    volumes:
+      - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount configs directory
     depends_on:
       - yarn-resourcemanager
     command: ["yarn", "nodemanager"]

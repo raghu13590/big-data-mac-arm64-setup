@@ -1,24 +1,29 @@
 #!/bin/bash
 
-# Function to generate Hadoop configuration files
+# Function to generate Hadoop configuration files only if they don't already exist
 generate_config() {
   CONFIG_DIR="$HADOOP_HOME/etc/hadoop"
 
   for conf in core-site hdfs-site yarn-site mapred-site; do
-    : > "$CONFIG_DIR/${conf}.xml"
-    echo '<?xml version="1.0" encoding="UTF-8"?>' >> "$CONFIG_DIR/${conf}.xml"
-    echo '<configuration>' >> "$CONFIG_DIR/${conf}.xml"
+    if [ ! -f "$CONFIG_DIR/${conf}.xml" ]; then
+      echo "Generating $CONFIG_DIR/${conf}.xml"
+      : > "$CONFIG_DIR/${conf}.xml"
+      echo '<?xml version="1.0" encoding="UTF-8"?>' >> "$CONFIG_DIR/${conf}.xml"
+      echo '<configuration>' >> "$CONFIG_DIR/${conf}.xml"
 
-    # Extract the prefix from conf name, e.g., 'core' from 'core-site'
-    conf_prefix=$(echo "${conf%%-*}" | tr '[:lower:]' '[:upper:]')
+      # Extract the prefix from conf name, e.g., 'core' from 'core-site'
+      conf_prefix=$(echo "${conf%%-*}" | tr '[:lower:]' '[:upper:]')
 
-    # Process environment variables matching the prefix
-    env | grep "^${conf_prefix}_CONF_" | while IFS='=' read -r name value; do
-      prop_name=$(echo "$name" | sed -e "s/^${conf_prefix}_CONF_//" | tr '_' '.')
-      echo "  <property><name>${prop_name}</name><value>${value}</value></property>" >> "$CONFIG_DIR/${conf}.xml"
-    done
+      # Process environment variables matching the prefix
+      env | grep "^${conf_prefix}_CONF_" | while IFS='=' read -r name value; do
+        prop_name=$(echo "$name" | sed -e "s/^${conf_prefix}_CONF_//" | tr '_' '.')
+        echo "  <property><name>${prop_name}</name><value>${value}</value></property>" >> "$CONFIG_DIR/${conf}.xml"
+      done
 
-    echo '</configuration>' >> "$CONFIG_DIR/${conf}.xml"
+      echo '</configuration>' >> "$CONFIG_DIR/${conf}.xml"
+    else
+      echo "$CONFIG_DIR/${conf}.xml already exists, skipping generation."
+    fi
   done
 }
 
