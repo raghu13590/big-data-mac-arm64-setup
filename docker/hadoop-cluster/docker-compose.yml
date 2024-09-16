@@ -122,6 +122,8 @@ services:
       - SPARK_PUBLIC_DNS=localhost
       - SPARK_CONF_spark_ui_reverseProxy=true
       - SPARK_MASTER_WEBUI_PORT=8080
+      - SPARK_DIST_CLASSPATH=/opt/hadoop-3.3.6/etc/hadoop:/opt/hadoop-3.3.6/share/hadoop/common/lib/*:/opt/hadoop-3.3.6/share/hadoop/common/*:/opt/hadoop-3.3.6/share/hadoop/hdfs:/opt/hadoop-3.3.6/share/hadoop/hdfs/lib/*:/opt/hadoop-3.3.6/share/hadoop/hdfs/*:/opt/hadoop-3.3.6/share/hadoop/mapreduce/*:/opt/hadoop-3.3.6/share/hadoop/yarn/lib/*:/opt/hadoop-3.3.6/share/hadoop/yarn/*
+      - SPARK_MODE=master
     ports:
       - "7077:7077"  # Spark master port
       - "8080:8080"  # Spark Web UI
@@ -152,6 +154,8 @@ services:
       - SPARK_PUBLIC_DNS=localhost
       - SPARK_CONF_spark_ui_reverseProxy=true
       - SPARK_WORKER_WEBUI_PORT=8083
+      - SPARK_DIST_CLASSPATH=/opt/hadoop-3.3.6/etc/hadoop:/opt/hadoop-3.3.6/share/hadoop/common/lib/*:/opt/hadoop-3.3.6/share/hadoop/common/*:/opt/hadoop-3.3.6/share/hadoop/hdfs:/opt/hadoop-3.3.6/share/hadoop/hdfs/lib/*:/opt/hadoop-3.3.6/share/hadoop/hdfs/*:/opt/hadoop-3.3.6/share/hadoop/mapreduce/*:/opt/hadoop-3.3.6/share/hadoop/yarn/lib/*:/opt/hadoop-3.3.6/share/hadoop/yarn/*
+      - SPARK_MODE=worker
     depends_on:
       - spark-master
     ports:
@@ -181,6 +185,8 @@ services:
       - SPARK_PUBLIC_DNS=localhost
       - SPARK_CONF_spark_ui_reverseProxy=true
       - SPARK_WORKER_WEBUI_PORT=8084
+      - SPARK_DIST_CLASSPATH=/opt/hadoop-3.3.6/etc/hadoop:/opt/hadoop-3.3.6/share/hadoop/common/lib/*:/opt/hadoop-3.3.6/share/hadoop/common/*:/opt/hadoop-3.3.6/share/hadoop/hdfs:/opt/hadoop-3.3.6/share/hadoop/hdfs/lib/*:/opt/hadoop-3.3.6/share/hadoop/hdfs/*:/opt/hadoop-3.3.6/share/hadoop/mapreduce/*:/opt/hadoop-3.3.6/share/hadoop/yarn/lib/*:/opt/hadoop-3.3.6/share/hadoop/yarn/*
+      - SPARK_MODE=worker
     depends_on:
       - spark-master
     ports:
