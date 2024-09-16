@@ -60,7 +60,10 @@ RUN apt-get -q update && \
         pmdk-tools \
         libpmem-dev \
         cmake \
-        nasm && \
+        nasm \
+        less \
+        vim \
+        nano && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
