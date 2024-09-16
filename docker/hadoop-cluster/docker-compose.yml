@@ -81,9 +81,6 @@ services:
       - YARN_CONF_yarn_nodemanager_resource_memory_mb=4096
       - YARN_CONF_yarn_scheduler_maximum_allocation_mb=4096
       - YARN_CONF_yarn_scheduler_minimum_allocation_mb=1024
-      - MAPRED_CONF_mapreduce_framework_name=yarn
-      - MAPRED_CONF_mapreduce_jobhistory_address=localhost:10020
-      - MAPRED_CONF_mapreduce_jobhistory_webapp_address=localhost:19888
     volumes:
       - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount configs directory
     depends_on:
@@ -102,14 +99,96 @@ services:
       - YARN_CONF_yarn_nodemanager_resource_memory_mb=4096
       - YARN_CONF_yarn_scheduler_maximum_allocation_mb=4096
       - YARN_CONF_yarn_scheduler_minimum_allocation_mb=1024
-      - MAPRED_CONF_mapreduce_framework_name=yarn
-      - MAPRED_CONF_mapreduce_jobhistory_address=localhost:10020
-      - MAPRED_CONF_mapreduce_jobhistory_webapp_address=localhost:19888
     volumes:
       - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount configs directory
     depends_on:
       - yarn-resourcemanager
     command: ["/bin/bash", "-c", "sleep 15 && yarn nodemanager"]
+    networks:
+      - hadoop
+
+  # Spark Master
+  spark-master:
+    image: bitnami/spark:3.3.0
+    container_name: spark-master
+    environment:
+      - HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
+      - YARN_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_PUBLIC_DNS=localhost
+      - SPARK_CONF_spark_ui_reverseProxy=true
+      - SPARK_MASTER_WEBUI_PORT=8080
+    ports:
+      - "7077:7077"  # Spark master port
+      - "8080:8080"  # Spark Web UI
+    volumes:
+      - ./data/spark/jars:/opt/bitnami/spark/custom-jars
+      - ./data/spark/data:/opt/bitnami/spark/data
+      - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount Hadoop configs
+    depends_on:
+      - yarn-resourcemanager
+    networks:
+      - hadoop
+
+  # Spark Worker 1
+  spark-worker-1:
+    image: bitnami/spark:3.3.0
+    container_name: spark-worker-1
+    environment:
+      - HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
+      - YARN_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_PUBLIC_DNS=localhost
+      - SPARK_CONF_spark_ui_reverseProxy=true
+      - SPARK_WORKER_WEBUI_PORT=8083
+    depends_on:
+      - spark-master
+    ports:
+        - "8083:8083"
+    volumes:
+      - ./data/spark/jars:/opt/bitnami/spark/custom-jars
+      - ./data/spark/data:/opt/bitnami/spark/data
+      - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount Hadoop configs
+    networks:
+      - hadoop
+
+  # Spark Worker 2
+  spark-worker-2:
+    image: bitnami/spark:3.3.0
+    container_name: spark-worker-2
+    environment:
+      - HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
+      - YARN_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_PUBLIC_DNS=localhost
+      - SPARK_CONF_spark_ui_reverseProxy=true
+      - SPARK_WORKER_WEBUI_PORT=8084
+    depends_on:
+      - spark-master
+    ports:
+        - "8084:8084"
+    volumes:
+      - ./data/spark/jars:/opt/bitnami/spark/custom-jars
+      - ./data/spark/data:/opt/bitnami/spark/data
+      - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount Hadoop configs
     networks:
       - hadoop
 
