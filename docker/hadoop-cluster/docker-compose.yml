@@ -5,7 +5,7 @@ services:
     hostname: hadoop-namenode
     environment:
       - CORE_CONF_fs_defaultFS=hdfs://hadoop-namenode:9000
-      - HDFS_CONF_dfs_replication=1
+      - HDFS_CONF_dfs_replication=2
       - HDFS_CONF_dfs_namenode_name_dir=file:///hadoop_data/hdfs/namenode
     ports:
       - "9870:9870"  # NameNode Web UI
@@ -17,19 +17,35 @@ services:
     networks:
       - hadoop
 
-  hadoop-datanode:
+  hadoop-datanode-1:
     image: apache/hadoop:3.3.6-arm64
-    container_name: hadoop-datanode
-    hostname: hadoop-datanode
+    container_name: hadoop-datanode-1
+    hostname: hadoop-datanode-1
     environment:
       - CORE_CONF_fs_defaultFS=hdfs://hadoop-namenode:9000
       - HDFS_CONF_dfs_datanode_data_dir=file:///hadoop_data/hdfs/datanode
     volumes:
-      - ./data/hadoop/datanode:/hadoop_data/hdfs/datanode
+      - ./data/hadoop/datanode-1:/hadoop_data/hdfs/datanode
       - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount configs directory
     depends_on:
       - hadoop-namenode
-    command: ["hdfs", "datanode"]
+    command: ["/bin/bash", "-c", "sleep 10 && hdfs datanode"]
+    networks:
+      - hadoop
+
+  hadoop-datanode-2:
+    image: apache/hadoop:3.3.6-arm64
+    container_name: hadoop-datanode-2
+    hostname: hadoop-datanode-2
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-namenode:9000
+      - HDFS_CONF_dfs_datanode_data_dir=file:///hadoop_data/hdfs/datanode
+    volumes:
+      - ./data/hadoop/datanode-2:/hadoop_data/hdfs/datanode
+      - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount configs directory
+    depends_on:
+      - hadoop-namenode
+    command: ["/bin/bash", "-c", "sleep 10 && hdfs datanode"]
     networks:
       - hadoop
 
@@ -55,10 +71,10 @@ services:
     networks:
       - hadoop
 
-  yarn-nodemanager:
+  yarn-nodemanager-1:
     image: apache/hadoop:3.3.6-arm64
-    container_name: yarn-nodemanager
-    hostname: yarn-nodemanager
+    container_name: yarn-nodemanager-1
+    hostname: yarn-nodemanager-1
     environment:
       - YARN_CONF_yarn_resourcemanager_hostname=yarn-resourcemanager
       - CORE_CONF_fs_defaultFS=hdfs://hadoop-namenode:9000
@@ -72,7 +88,28 @@ services:
       - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount configs directory
     depends_on:
       - yarn-resourcemanager
-    command: ["yarn", "nodemanager"]
+    command: ["/bin/bash", "-c", "sleep 15 && yarn nodemanager"]
+    networks:
+      - hadoop
+
+  yarn-nodemanager-2:
+    image: apache/hadoop:3.3.6-arm64
+    container_name: yarn-nodemanager-2
+    hostname: yarn-nodemanager-2
+    environment:
+      - YARN_CONF_yarn_resourcemanager_hostname=yarn-resourcemanager
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-namenode:9000
+      - YARN_CONF_yarn_nodemanager_resource_memory_mb=4096
+      - YARN_CONF_yarn_scheduler_maximum_allocation_mb=4096
+      - YARN_CONF_yarn_scheduler_minimum_allocation_mb=1024
+      - MAPRED_CONF_mapreduce_framework_name=yarn
+      - MAPRED_CONF_mapreduce_jobhistory_address=localhost:10020
+      - MAPRED_CONF_mapreduce_jobhistory_webapp_address=localhost:19888
+    volumes:
+      - ./configs:/opt/hadoop-3.3.6/etc/hadoop  # Mount configs directory
+    depends_on:
+      - yarn-resourcemanager
+    command: ["/bin/bash", "-c", "sleep 15 && yarn nodemanager"]
     networks:
       - hadoop
 
@@ -82,4 +119,5 @@ networks:
 
 volumes:
   namenode-data:
-  datanode-data:
+  datanode-data-1:
+  datanode-data-2:

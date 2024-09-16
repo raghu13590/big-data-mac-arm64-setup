@@ -37,20 +37,23 @@
     <value>yarn-resourcemanager:8032</value>
   </property>
 
-  <!-- Define the mapreduce_shuffle auxiliary service -->
+  <!-- Enable mapreduce shuffle auxiliary service -->
   <property>
     <name>yarn.nodemanager.aux-services</name>
     <value>mapreduce_shuffle</value>
   </property>
-
   <property>
     <name>yarn.nodemanager.aux-services.mapreduce_shuffle.class</name>
     <value>org.apache.hadoop.mapred.ShuffleHandler</value>
   </property>
 
-  <!-- Ensure the scheduler is properly configured -->
+  <!-- Capacity Scheduler Configuration -->
   <property>
     <name>yarn.scheduler.capacity.root.queues</name>
     <value>default</value>
+  </property>
+  <property>
+    <name>yarn.scheduler.capacity.root.default.capacity</name>
+    <value>100</value>
   </property>
 </configuration>
