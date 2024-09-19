@@ -117,7 +117,11 @@ RUN mkdir -p /opt/hadoop-$HADOOP_VERSION/logs && chown -R hadoop:hadoop /opt/had
 
 # Set HADOOP_HOME to the extracted directory
 ENV HADOOP_HOME=/opt/hadoop-$HADOOP_VERSION
-ENV PATH="${PATH}:${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin"
+ENV HADOOP_MAPRED_HOME=/opt/hadoop-3.3.6
+
+ENV HADOOP_HOME=/opt/hadoop-$HADOOP_VERSION \
+    HADOOP_MAPRED_HOME=/opt/hadoop-$HADOOP_VERSION \
+    PATH="${PATH}:${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${HADOOP_MAPRED_HOME}/bin:${HADOOP_MAPRED_HOME}/sbin"
 
 # Switch to 'hadoop' user
 USER hadoop
