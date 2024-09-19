@@ -1,0 +1,113 @@
+services:
+  namenode:
+    image: hadoop:3.3.6
+    container_name: namenode
+    hostname: namenode
+    ports:
+      - "9870:9870"
+    volumes:
+      - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
+      - ../app-data/hadoop/namenode:/hadoop/dfs/name
+    environment:
+      - HADOOP_HOME=/opt/hadoop-3.3.6
+    command: namenode
+    networks:
+      - big-data-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9870" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  datanode1:
+    image: hadoop:3.3.6
+    container_name: datanode1
+    hostname: datanode1
+    volumes:
+      - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
+      - ../app-data/hadoop/datanode1:/hadoop/dfs/data
+    environment:
+      - HADOOP_HOME=/opt/hadoop-3.3.6
+    command: datanode
+    networks:
+      - big-data-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9864" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  datanode2:
+    image: hadoop:3.3.6
+    container_name: datanode2
+    hostname: datanode2
+    volumes:
+      - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
+      - ../app-data/hadoop/datanode2:/hadoop/dfs/data
+    environment:
+      - HADOOP_HOME=/opt/hadoop-3.3.6
+    command: datanode
+    networks:
+      - big-data-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9864" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  resourcemanager:
+    image: hadoop:3.3.6
+    container_name: resourcemanager
+    hostname: resourcemanager
+    ports:
+      - "8088:8088"
+    volumes:
+      - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
+    environment:
+      - HADOOP_HOME=/opt/hadoop-3.3.6
+    command: resourcemanager
+    networks:
+      - big-data-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://resourcemanager:8088/isActive" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nodemanager1:
+    image: hadoop:3.3.6
+    container_name: nodemanager1
+    hostname: nodemanager1
+    volumes:
+      - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
+    environment:
+      - HADOOP_HOME=/opt/hadoop-3.3.6
+    command: nodemanager
+    networks:
+      - big-data-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8042" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nodemanager2:
+    image: hadoop:3.3.6
+    container_name: nodemanager2
+    hostname: nodemanager2
+    volumes:
+      - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
+    environment:
+      - HADOOP_HOME=/opt/hadoop-3.3.6
+    command: nodemanager
+    networks:
+      - big-data-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8042" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  big-data-network:
+    external: true
