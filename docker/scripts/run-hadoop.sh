@@ -59,4 +59,9 @@ start_and_verify_service "resourcemanager"
 start_and_verify_service "nodemanager1"
 start_and_verify_service "nodemanager2"
 
+# Start Hive
+start_and_verify_service "mysql"
+start_and_verify_service "metastore"
+start_and_verify_service "hiveserver2"
+
 echo "Hadoop cluster is now running."

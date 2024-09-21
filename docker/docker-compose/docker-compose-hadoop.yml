@@ -112,6 +112,54 @@ services:
       timeout: 10s
       retries: 3
 
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    hostname: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: metastore
+      MYSQL_USER: hive
+      MYSQL_PASSWORD: hive
+    volumes:
+      - ../app-data/mysql:/var/lib/mysql
+    networks:
+      - big-data-network
+
+  metastore:
+    image: hadoop:3.3.6
+    container_name: metastore
+    hostname: metastore
+    depends_on:
+      - mysql
+    volumes:
+      - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
+      - ../configs/hadoop/hive-site.xml:/opt/hive-3.1.3/conf/hive-site.xml
+    environment:
+      - HADOOP_HOME=/opt/hadoop-3.3.6
+      - HIVE_HOME=/opt/hive-3.1.3
+    command: metastore
+    networks:
+      - big-data-network
+
+  hiveserver2:
+    image: hadoop:3.3.6
+    container_name: hiveserver2
+    hostname: hiveserver2
+    depends_on:
+      - metastore
+    volumes:
+      - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
+      - ../configs/hadoop/hive-site.xml:/opt/hive-3.1.3/conf/hive-site.xml
+    environment:
+      - HADOOP_HOME=/opt/hadoop-3.3.6
+      - HIVE_HOME=/opt/hive-3.1.3
+    ports:
+      - "10000:10000"
+    command: hiveserver2
+    networks:
+      - big-data-network
+
 networks:
   big-data-network:
     external: true
