@@ -109,6 +109,9 @@ RUN git clone https://github.com/apache/hadoop.git /hadoop-src && \
     mkdir -p /opt/hadoop-$HADOOP_VERSION && \
     cp -r /hadoop-src/hadoop-dist/target/hadoop-$HADOOP_VERSION/* /opt/hadoop-$HADOOP_VERSION
 
+# Remove Hadoop's SLF4J to avoid conflict with Hive's
+RUN rm $HADOOP_HOME/share/hadoop/common/lib/slf4j-reload4j-1.7.36.jar
+
 # Install Hive
 ENV HIVE_VERSION=3.1.3
 RUN wget https://downloads.apache.org/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_VERSION-bin.tar.gz && \
@@ -119,11 +122,10 @@ RUN wget https://downloads.apache.org/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_
 ENV HIVE_HOME=/opt/hive-$HIVE_VERSION
 ENV PATH=$HIVE_HOME/bin:$PATH
 
-# Install MySQL Connector
-# Install MySQL Connector
-RUN wget https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.0.33/mysql-connector-j-8.0.33.jar -O mysql-connector-j.jar && \
-    mv mysql-connector-j.jar $HIVE_HOME/lib/ && \
-    rm -f mysql-connector-j.jar
+# Install PostgreSQL JDBC Driver
+RUN wget https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -O postgresql-jdbc.jar && \
+    mv postgresql-jdbc.jar $HIVE_HOME/lib/ && \
+    rm -f postgresql-jdbc.jar
 
 # Create a non-root user 'hadoop' with a home directory
 RUN useradd -ms /bin/bash hadoop
@@ -138,12 +140,6 @@ ENV HADOOP_MAPRED_HOME=/opt/hadoop-3.3.6
 ENV HADOOP_HOME=/opt/hadoop-$HADOOP_VERSION \
     HADOOP_MAPRED_HOME=/opt/hadoop-$HADOOP_VERSION \
     PATH="${PATH}:${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${HADOOP_MAPRED_HOME}/bin:${HADOOP_MAPRED_HOME}/sbin"
-
-# Download and install MySQL Connector
-RUN wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-j-8.0.33.tar.gz && \
-    tar -xzf mysql-connector-j-8.0.33.tar.gz && \
-    cp mysql-connector-j-8.0.33/mysql-connector-j-8.0.33.jar $HIVE_HOME/lib/ && \
-    rm -rf mysql-connector-j-8.0.33 mysql-connector-j-8.0.33.tar.gz
 
 # Switch to 'hadoop' user
 USER hadoop

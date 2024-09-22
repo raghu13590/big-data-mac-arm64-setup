@@ -112,17 +112,16 @@ services:
       timeout: 10s
       retries: 3
 
-  mysql:
-    image: mysql:8.0
-    container_name: mysql
-    hostname: mysql
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    hostname: postgres
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: metastore
-      MYSQL_USER: hive
-      MYSQL_PASSWORD: hive
+      POSTGRES_DB: metastore
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: hive
     volumes:
-      - ../app-data/mysql:/var/lib/mysql
+      - ../app-data/postgres:/var/lib/postgresql/data
     networks:
       - big-data-network
 
@@ -131,7 +130,7 @@ services:
     container_name: metastore
     hostname: metastore
     depends_on:
-      - mysql
+      - postgres
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../configs/hadoop/hive-site.xml:/opt/hive-3.1.3/conf/hive-site.xml

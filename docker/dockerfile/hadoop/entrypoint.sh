@@ -9,7 +9,7 @@ export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$HADOOP_MAPRED_HOME/bin:$HA
 
 # Function to initialize Hive schema
 initialize_hive_schema() {
-    $HIVE_HOME/bin/schematool -dbType mysql -initSchema
+    $HIVE_HOME/bin/schematool -dbType postgres -initSchema
 }
 
 # Start the specified Hadoop component
