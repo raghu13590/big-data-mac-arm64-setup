@@ -145,6 +145,11 @@ services:
     command: metastore
     networks:
       - big-data-network
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "nc -zv localhost 9083" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   hiveserver2:
     image: hadoop:3.3.6
@@ -163,6 +168,11 @@ services:
     command: hiveserver2
     networks:
       - big-data-network
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "nc -zv localhost 10000" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   big-data-network:

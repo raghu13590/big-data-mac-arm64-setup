@@ -118,7 +118,6 @@ RUN wget https://downloads.apache.org/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_
     mv apache-hive-$HIVE_VERSION-bin /opt/hive-$HIVE_VERSION && \
     rm apache-hive-$HIVE_VERSION-bin.tar.gz
 
-
 ENV HIVE_HOME=/opt/hive-$HIVE_VERSION
 ENV PATH=$HIVE_HOME/bin:$PATH
 
@@ -130,6 +129,9 @@ RUN wget https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -O postgresq
 # Create a non-root user 'hadoop' with a home directory
 RUN useradd -ms /bin/bash hadoop
 
+# Create a non-root user 'hive' with a home directory
+RUN useradd -ms /bin/bash hive
+
 # Create logs directory and change ownership to 'hadoop' user
 RUN mkdir -p /opt/hadoop-$HADOOP_VERSION/logs && chown -R hadoop:hadoop /opt/hadoop-$HADOOP_VERSION/logs
 
@@ -140,6 +142,11 @@ ENV HADOOP_MAPRED_HOME=/opt/hadoop-3.3.6
 ENV HADOOP_HOME=/opt/hadoop-$HADOOP_VERSION \
     HADOOP_MAPRED_HOME=/opt/hadoop-$HADOOP_VERSION \
     PATH="${PATH}:${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${HADOOP_MAPRED_HOME}/bin:${HADOOP_MAPRED_HOME}/sbin"
+
+# Add hive and hadoop users to supergroup for full HDFS permissions
+RUN groupadd supergroup && \
+    usermod -aG supergroup hadoop && \
+    usermod -aG supergroup hive
 
 # Switch to 'hadoop' user
 USER hadoop
