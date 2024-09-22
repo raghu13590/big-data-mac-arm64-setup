@@ -60,6 +60,8 @@ RUN apt-get -q update && \
         libpmem-dev \
         cmake \
         nasm \
+        netcat \
+        net-tools \
         less \
         nano && \
     apt-get clean && \
@@ -109,15 +111,13 @@ RUN git clone https://github.com/apache/hadoop.git /hadoop-src && \
     mkdir -p /opt/hadoop-$HADOOP_VERSION && \
     cp -r /hadoop-src/hadoop-dist/target/hadoop-$HADOOP_VERSION/* /opt/hadoop-$HADOOP_VERSION
 
-# Remove Hadoop's SLF4J to avoid conflict with Hive's
-RUN rm $HADOOP_HOME/share/hadoop/common/lib/slf4j-reload4j-1.7.36.jar
-
 # Install Hive
-ENV HIVE_VERSION=3.1.3
+ENV HIVE_VERSION=4.0.0
 RUN wget https://downloads.apache.org/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_VERSION-bin.tar.gz && \
     tar -xzf apache-hive-$HIVE_VERSION-bin.tar.gz && \
     mv apache-hive-$HIVE_VERSION-bin /opt/hive-$HIVE_VERSION && \
     rm apache-hive-$HIVE_VERSION-bin.tar.gz
+
 
 ENV HIVE_HOME=/opt/hive-$HIVE_VERSION
 ENV PATH=$HIVE_HOME/bin:$PATH

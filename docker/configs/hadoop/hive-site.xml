@@ -19,10 +19,14 @@
     </property>
     <property>
         <name>hive.metastore.warehouse.dir</name>
-        <value>/user/hive/warehouse</value>
+        <value>hdfs://namenode:9000/user/hive/warehouse</value>
     </property>
     <property>
         <name>hive.metastore.uris</name>
         <value>thrift://metastore:9083</value>
+    </property>
+    <property>
+        <name>hive.security.authorization.storagebasedfilecheck</name>
+        <value>false</value>
     </property>
 </configuration>

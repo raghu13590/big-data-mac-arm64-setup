@@ -124,6 +124,11 @@ services:
       - ../app-data/postgres:/var/lib/postgresql/data
     networks:
       - big-data-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U hive -d metastore" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   metastore:
     image: hadoop:3.3.6
@@ -133,10 +138,10 @@ services:
       - postgres
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-      - ../configs/hadoop/hive-site.xml:/opt/hive-3.1.3/conf/hive-site.xml
+      - ../configs/hadoop/hive-site.xml:/opt/hive-4.0.0/conf/hive-site.xml
     environment:
       - HADOOP_HOME=/opt/hadoop-3.3.6
-      - HIVE_HOME=/opt/hive-3.1.3
+      - HIVE_HOME=/opt/hive-4.0.0
     command: metastore
     networks:
       - big-data-network
@@ -149,10 +154,10 @@ services:
       - metastore
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-      - ../configs/hadoop/hive-site.xml:/opt/hive-3.1.3/conf/hive-site.xml
+      - ../configs/hadoop/hive-site.xml:/opt/hive-4.0.0/conf/hive-site.xml
     environment:
       - HADOOP_HOME=/opt/hadoop-3.3.6
-      - HIVE_HOME=/opt/hive-3.1.3
+      - HIVE_HOME=/opt/hive-4.0.0
     ports:
       - "10000:10000"
     command: hiveserver2

@@ -13,4 +13,12 @@
         <name>dfs.datanode.data.dir</name>
         <value>/hadoop/dfs/data</value>
     </property>
+    <property>
+        <name>dfs.permissions.enabled</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>dfs.permissions.superusergroup</name>
+        <value>supergroup</value>
+    </property>
 </configuration>

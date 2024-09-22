@@ -16,9 +16,6 @@ check_docker_running
 # Validate the Docker Compose file
 validate_compose_file "$COMPOSE_FILE"
 
-# Create the Hadoop network if it doesn't exist
-create_network_if_not_exists "hadoop-network"
-
 # Build the Hadoop image
 echo "Building Hadoop image..."
 docker build -t hadoop:3.3.6 "$DOCKERFILE_DIR"
@@ -27,6 +24,19 @@ docker build -t hadoop:3.3.6 "$DOCKERFILE_DIR"
 format_namenode() {
     echo "Formatting NameNode..."
     docker-compose -f "$COMPOSE_FILE" run --rm namenode hdfs namenode -format
+}
+
+# Function to initialize the metastore schema
+initialize_metastore_schema() {
+    echo "Initializing metastore schema..."
+    docker-compose -f "$COMPOSE_FILE" exec metastore $HIVE_HOME/bin/schematool -dbType postgres -initSchema
+}
+
+# Function to drop and recreate the metastore schema
+drop_and_recreate_metastore_schema() {
+    echo "Dropping and recreating metastore schema..."
+    docker-compose -f "$COMPOSE_FILE" exec metastore $HIVE_HOME/bin/schematool -dbType postgres -dropSchema
+    docker-compose -f "$COMPOSE_FILE" exec metastore $HIVE_HOME/bin/schematool -dbType postgres -initSchema
 }
 
 # Function to start and verify a service
@@ -60,6 +70,12 @@ start_and_verify_service "nodemanager1"
 start_and_verify_service "nodemanager2"
 
 # Start Hive
+# Check if PostgreSQL data directory is empty
+if [ ! "$(ls -A $SCRIPT_DIR/../app-data/postgres)" ]; then
+    initialize_metastore_schema
+else
+    drop_and_recreate_metastore_schema
+fi
 start_and_verify_service "postgres"
 start_and_verify_service "metastore"
 start_and_verify_service "hiveserver2"
