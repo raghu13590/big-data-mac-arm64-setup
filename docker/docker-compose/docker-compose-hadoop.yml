@@ -139,6 +139,7 @@ services:
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../configs/hadoop/hive-site.xml:/opt/hive-4.0.0/conf/hive-site.xml
+      - ../app-data/metastore:/opt/hive-4.0.0/metastore_db
     environment:
       - HADOOP_HOME=/opt/hadoop-3.3.6
       - HIVE_HOME=/opt/hive-4.0.0
