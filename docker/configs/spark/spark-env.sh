@@ -7,8 +7,3 @@ export YARN_CONF_DIR=/opt/bitnami/hadoop/conf
 
 # Set Spark to use YARN as the master
 export SPARK_MASTER=yarnLD_PRELOAD=/opt/bitnami/common/lib/libnss_wrapper.so
-LD_PRELOAD=/opt/bitnami/common/lib/libnss_wrapper.so
-LD_PRELOAD=/opt/bitnami/common/lib/libnss_wrapper.so
-LD_PRELOAD=/opt/bitnami/common/lib/libnss_wrapper.so
-LD_PRELOAD=/opt/bitnami/common/lib/libnss_wrapper.so
-LD_PRELOAD=/opt/bitnami/common/lib/libnss_wrapper.so
