@@ -14,6 +14,7 @@ verify_service "zookeeper"
 
 # Restart Spark services if they are not running
 restart_service "spark-master" "$SCRIPT_DIR/../docker-compose/docker-compose-spark.yml" "spark-master"
+restart_service "spark-history" "$SCRIPT_DIR/../docker-compose/docker-compose-spark.yml" "spark-history"
 restart_service "spark-worker-1" "$SCRIPT_DIR/../docker-compose/docker-compose-spark.yml" "spark-worker-1"
 restart_service "spark-worker-2" "$SCRIPT_DIR/../docker-compose/docker-compose-spark.yml" "spark-worker-2"
 

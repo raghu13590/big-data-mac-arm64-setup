@@ -13,6 +13,7 @@ services:
       - SPARK_CONF_spark_ui_reverseProxy=true
       - SPARK_MASTER_WEBUI_PORT=8082
       - SPARK_CONF_DIR=/opt/bitnami/spark/conf
+      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=file:/opt/bitnami/spark/history
     ports:
       - "8082:8082"
     volumes:
@@ -20,6 +21,7 @@ services:
       - ../app-data/spark/jars:/opt/bitnami/spark/custom-jars
       - ../app-data/spark:/opt/bitnami/spark/data
       - ../configs/hadoop/hive-site.xml:/opt/bitnami/spark/conf/hive-site.xml
+      - ../app-data/spark/history:/opt/bitnami/spark/history
     networks:
       - big-data-network
     healthcheck:
@@ -28,6 +30,19 @@ services:
       timeout: 10s
       retries: 5
       start_period: 5s
+
+  spark-history:
+    image: bitnami/spark:latest
+    container_name: spark-history
+    environment:
+      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=file:/opt/bitnami/spark/history
+    ports:
+      - "18080:18080"
+    volumes:
+      - ../app-data/spark/history:/opt/bitnami/spark/history
+    networks:
+      - big-data-network
+    command: "/opt/bitnami/spark/sbin/start-history-server.sh"
 
   spark-worker-1:
     image: bitnami/spark:latest
@@ -91,7 +106,7 @@ services:
     networks:
       - big-data-network
     healthcheck:
-      test: [ "CMD-SHELL", "python3 -c 'import urllib.request as urllib; import json; res = urllib.urlopen(\"http://localhost:8084/json/\"); data = json.load(res); exit(0) if \"cores\" in data else exit(1)'" ]
+      test: ["CMD-SHELL", "python3 -c 'import urllib.request as urllib; import json; res = urllib.urlopen(\"http://localhost:8084/json/\"); data = json.load(res); exit(0) if \"cores\" in data else exit(1)'"]
       interval: 30s
       timeout: 10s
       retries: 5
