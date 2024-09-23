@@ -18,3 +18,6 @@ restart_service "spark-worker-1" "$SCRIPT_DIR/../docker-compose/docker-compose-s
 restart_service "spark-worker-2" "$SCRIPT_DIR/../docker-compose/docker-compose-spark.yml" "spark-worker-2"
 
 echo "All services are up and running!"
+
+# Run Spark tests
+"$SCRIPT_DIR/test-spark.sh"

@@ -3,6 +3,7 @@ services:
     image: bitnami/spark:latest
     container_name: spark-master
     environment:
+      - HADOOP_CONF_DIR=/opt/bitnami/hadoop/conf
       - SPARK_MODE=master
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
       - SPARK_RPC_ENCRYPTION_ENABLED=no
@@ -13,11 +14,12 @@ services:
       - SPARK_MASTER_WEBUI_PORT=8082
       - SPARK_CONF_DIR=/opt/bitnami/spark/conf
     ports:
-      - "8082:8082" # Spark Master UI on port 8082
+      - "8082:8082"
     volumes:
-      - ../service-data/spark/configs:/opt/bitnami/spark/conf  # Mount the configuration directory
-      - ../service-data/spark/volumes/jars:/opt/bitnami/spark/custom-jars
-      - ../service-data/spark/volumes/data:/opt/bitnami/spark/data
+      - ../configs/spark:/opt/bitnami/spark/conf
+      - ../app-data/spark/jars:/opt/bitnami/spark/custom-jars
+      - ../app-data/spark:/opt/bitnami/spark/data
+      - ../configs/hadoop/hive-site.xml:/opt/bitnami/spark/conf/hive-site.xml
     networks:
       - big-data-network
     healthcheck:
@@ -31,6 +33,7 @@ services:
     image: bitnami/spark:latest
     container_name: spark-worker-1
     environment:
+      - HADOOP_CONF_DIR=/opt/bitnami/hadoop/conf
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_WORKER_MEMORY=1G
@@ -45,11 +48,12 @@ services:
     depends_on:
       - spark-master
     ports:
-      - "8083:8083" # Spark Worker UI on port 8083
+      - "8083:8083"
     volumes:
-      - ../service-data/spark/configs:/opt/bitnami/spark/conf
-      - ../service-data/spark/volumes/jars:/opt/bitnami/spark/custom-jars
-      - ../service-data/spark/volumes/data:/opt/bitnami/spark/data
+      - ../configs/spark:/opt/bitnami/spark/conf
+      - ../app-data/spark/jars:/opt/bitnami/spark/custom-jars
+      - ../app-data/spark:/opt/bitnami/spark/data
+      - ../configs/hadoop/hive-site.xml:/opt/bitnami/spark/conf/hive-site.xml
     networks:
       - big-data-network
     healthcheck:
@@ -63,6 +67,7 @@ services:
     image: bitnami/spark:latest
     container_name: spark-worker-2
     environment:
+      - HADOOP_CONF_DIR=/opt/bitnami/hadoop/conf
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_WORKER_MEMORY=1G
@@ -79,9 +84,10 @@ services:
     ports:
       - "8084:8084"
     volumes:
-      - ../service-data/spark/configs:/opt/bitnami/spark/conf  # Mount configuration directory
-      - ../service-data/spark/volumes/jars:/opt/bitnami/spark/custom-jars
-      - ../service-data/spark/volumes/data:/opt/bitnami/spark/data
+      - ../configs/spark:/opt/bitnami/spark/conf
+      - ../app-data/spark/jars:/opt/bitnami/spark/custom-jars
+      - ../app-data/spark:/opt/bitnami/spark/data
+      - ../configs/hadoop/hive-site.xml:/opt/bitnami/spark/conf/hive-site.xml
     networks:
       - big-data-network
     healthcheck:
