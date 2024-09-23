@@ -19,7 +19,7 @@ services:
     volumes:
       - ../configs/spark:/opt/bitnami/spark/conf
       - ../app-data/spark/jars:/opt/bitnami/spark/custom-jars
-      - ../app-data/spark:/opt/bitnami/spark/data
+      - ../app-data/spark/data:/opt/bitnami/spark/data
       - ../configs/hadoop/hive-site.xml:/opt/bitnami/spark/conf/hive-site.xml
       - ../app-data/spark/history:/opt/bitnami/spark/history
     networks:
@@ -67,7 +67,7 @@ services:
     volumes:
       - ../configs/spark:/opt/bitnami/spark/conf
       - ../app-data/spark/jars:/opt/bitnami/spark/custom-jars
-      - ../app-data/spark:/opt/bitnami/spark/data
+      - ../app-data/spark/data:/opt/bitnami/spark/data
       - ../configs/hadoop/hive-site.xml:/opt/bitnami/spark/conf/hive-site.xml
     networks:
       - big-data-network
@@ -101,7 +101,7 @@ services:
     volumes:
       - ../configs/spark:/opt/bitnami/spark/conf
       - ../app-data/spark/jars:/opt/bitnami/spark/custom-jars
-      - ../app-data/spark:/opt/bitnami/spark/data
+      - ../app-data/spark/data:/opt/bitnami/spark/data
       - ../configs/hadoop/hive-site.xml:/opt/bitnami/spark/conf/hive-site.xml
     networks:
       - big-data-network
