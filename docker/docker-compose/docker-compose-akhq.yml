@@ -5,8 +5,8 @@ services:
     ports:
       - "9093:9093"  # Port for accessing AKHQ
     volumes:
-      - ../service-data/akhq/configs/application.yml:/app/application.yml  # Mount the AKHQ configuration file
-      - ../service-data/akhq/volumes:/app/volumes  # Mount additional volumes if needed
+      - ../configs/akhq/application.yml:/app/application.yml  # Mount the AKHQ configuration file
+      - ../app-data/akhq/volumes:/app/volumes  # Mount additional volumes if needed
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9093/ || exit 1"]  # Health check to ensure AKHQ is running
       interval: 30s  # Health check interval
