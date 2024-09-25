@@ -16,14 +16,12 @@ This project provides a streamlined way to set up and manage a big data environm
 
 ## Prerequisites
 
-- Docker
-- Docker Compose
+- Docker or Docker Desktop
 - Bash
 
 ## Setup Instructions
 
 ### 1. Clone the Repository
-
 ```sh
 git clone https://github.com/your-repo/big-data-mac-arm64-setup.git
 cd big-data-mac-arm64-setup
@@ -38,55 +36,54 @@ chmod +x docker/scripts/*.sh
 ### 3. Running the Services
 
 ### 3.1. To start Zookeeper, run:
-This script will start the Zookeeper service and ensure it is running and healthy.
 ```sh
 ./docker/scripts/run-zookeeper.sh
 ```
+This script will start the Zookeeper service and ensure it is running and healthy.
 Once Zookeeper is running, you can access the Zookeeper Admin UI for managing and monitoring at http://localhost:8080/commands. 
 Use the available links to navigate to different commands like monitor, stat, conf, etc.
 
 ### 3.2. To start Kafka, run:
-This script will start the Kafka service and ensure it is running and healthy.
 ```sh
 ./docker/scripts/run-kafka.sh
 ```
+This script will start the Kafka service and ensure it is running and healthy.
 
 ### 3.3. To start AKHQ (Kafka UI), run:
-This script will start the AKHQ service and ensure it is running and healthy. AKHQ is a UI for managing and monitoring Apache Kafka clusters. It provides a user-friendly interface to manage topics, consumer groups, and other Kafka resources.
 ```sh
 ./docker/scripts/run-akhq.sh
 ```
+This script will start the AKHQ service and ensure it is running and healthy. AKHQ is a UI for managing and monitoring Apache Kafka clusters. It provides a user-friendly interface to manage topics, consumer groups, and other Kafka resources.
 Once the service is up and running, you can access AKHQ at http://localhost:9093.
 
 ### 3.4. To start Pinot, run:
-This script will start the Pinot controller, broker, and server services, ensuring they are running and healthy.
 ```sh
 ./docker/scripts/run-pinot.sh
 ```
+This script will start the Pinot controller, broker, and server services, ensuring they are running and healthy.
 Once the services are up and running, you can access Apache Pinot at http://localhost:9000.
 
 ### 3.5. To start Superset, run:
-This script will start the Superset service, generate a random secret key, and ensure the service is running and healthy.
 ```sh
 ./docker/scripts/run-superset.sh
 ```
+This script will start the Superset service, generate a random secret key, and ensure the service is running and healthy.
 Once the services are up and running, you can access Apache Superset at http://localhost:8088.
 
 ### 3.6. To start ZooNavigator, run:
-This script will start the ZooNavigator service and ensure it is running and healthy.
 ```sh
 ./docker/scripts/run-zoonavigator.sh
 ```
+This script will start the ZooNavigator service and ensure it is running and healthy.
 Open ZooNavigator in your browser at http://localhost:9001.
-
     •	Enter the Zookeeper connection string as zookeeper:2181.
     •	Save and connect.
 
 ### 3.7. To start Spark, run:
-This script will start the Spark master and worker services and ensure they are running and healthy.
 ```sh
 ./docker/scripts/run-spark.sh
 ```
+This script will start the Spark master and worker services and ensure they are running and healthy.
 Once the services are up and running, you can access the Spark Master UI at http://localhost:8082 and the Spark Worker UI at http://localhost:8083.
 Place your Spark job JAR files in the `docker/service-data/spark/jobs` folder and data files in the `docker/service-data/spark/data` folder.
 To run a Spark job, use the following command:
@@ -100,22 +97,26 @@ docker exec -it spark-master /opt/bitnami/spark/bin/spark-submit \
 ```
 
 ### 3.8. To start Flink, run:
-This script will start the Flink job manager and task manager services and ensure they are running and healthy.
 ```sh
 ./docker/scripts/run-flink.sh
 ```
-To run Flink with flame graphs, use the following command:
-```sh
-./docker/scripts/run-flink.sh --enable-flamegraph
-```
+This script will start the Flink job manager and task manager services and ensure they are running and healthy.
+To run Flink with flame graphs uncomment rest.flamegraph.enabled: true in the flink-conf.yaml file in the docker/service-data/flink/conf folder.
 Once the services are up and running, you can access the Flink Job Manager UI at http://localhost:8074.
 
 ### 3.9. To start the Kafka Producer, run:
-This script will start the Kafka Producer service, which continuously sends messages to a specified Kafka topic.
-Add .txt files with messages you'd like to send to the topic in the `docker/service-data/kafkaproducer/messages` folder. You can also modify each message by replacing the text in .txt files.
 ```sh
 ./docker/scripts/run-kafkaproducer.sh
 ```
+This script will start the Kafka Producer service, which continuously sends messages to a specified Kafka topic.
+Add .txt files with messages you'd like to send to the topic in the `docker/service-data/kafkaproducer/messages` folder. You can also modify each message by replacing the text in .txt files.
+
+### 3.10. To start Hadoop, run:
+```sh
+./docker/scripts/run-hadoop.sh
+```
+This script will start the Hadoop service and ensure it is running and healthy. It will install hdfs with one namenode and two datanodes, yarn with one resourcemanager and two nodemanagers, and mapreduce with one historyserver with postgresql metastore.
+Once the services are up and running, you can access the Hadoop Namenode UI at http://localhost:9870 and the Hadoop ResourceManager UI at http://localhost:8088.
 
 ## Additional Information
 

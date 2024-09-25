@@ -9,3 +9,4 @@ taskmanager.numberOfTaskSlots: 20
 jobmanager.web.submit.enable: true
 jobmanager.memory.process.size: 1024m
 query.server.port: 6125
+#rest.flamegraph.enabled: true
