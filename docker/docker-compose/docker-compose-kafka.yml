@@ -15,8 +15,8 @@ services:
       timeout: 10s
       retries: 5
     volumes:
-      - ../service-data/kafka/configs:/bitnami/kafka/config
-      - ../service-data/kafka/volumes:/bitnami/kafka/data
+      - ../configs/kafka:/bitnami/kafka/config
+      - ../app-data/kafka/volumes:/bitnami/kafka/data
     networks:
       - big-data-network
 
