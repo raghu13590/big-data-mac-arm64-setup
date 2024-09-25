@@ -13,7 +13,7 @@ COMPOSE_FILE="$SCRIPT_DIR/../docker-compose/docker-compose-kafkaproducer.yml"
 SERVICE_NAME="kafkaproducer"
 
 # Define the path for the sample message file
-MESSAGE_DIR="$SCRIPT_DIR/../service-data/kafkaproducer/messages"
+MESSAGE_DIR="$SCRIPT_DIR/../app-data/kafkaproducer/messages"
 MESSAGE_FILE="$MESSAGE_DIR/samplemessage.txt"
 
 # Create sample message file

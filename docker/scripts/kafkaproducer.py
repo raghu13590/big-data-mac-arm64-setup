@@ -22,6 +22,7 @@ producer = KafkaProducer(
     value_serializer=lambda v: v.encode('utf-8')
 )
 
+# Kafka topic to send messages to
 topic = 'your-topic-name'
 
 # Variables for message counting
@@ -65,6 +66,7 @@ def log_message_count():
         message_count = 0
         last_log_time = current_time
 
+# Main loop to continuously check for new files and send messages
 try:
     while True:
         # Get list of .txt files in the messages directory
