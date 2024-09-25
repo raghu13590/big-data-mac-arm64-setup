@@ -14,7 +14,7 @@ services:
     networks:
       - big-data-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9870" ]
+      test: [ "CMD", "bash", "-c", "nc -zv namenode 9000" ]
       interval: 30s
       timeout: 10s
       retries: 3
