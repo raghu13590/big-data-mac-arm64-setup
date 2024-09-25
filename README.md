@@ -93,12 +93,11 @@ To run a Spark job, use the following command:
 ```sh
 docker exec -it spark-master /opt/bitnami/spark/bin/spark-submit \
     --master spark://spark-master:7077 \
-    --class com.abc.MainClassName \
+    --class com.abc.MainClass \
     --executor-memory 1G \
     --total-executor-cores 1 \
     /opt/bitnami/spark/custom-jars/jarname.jar
 ```
-
 
 ### 3.8. To start Flink, run:
 This script will start the Flink job manager and task manager services and ensure they are running and healthy.
@@ -109,7 +108,7 @@ To run Flink with flame graphs, use the following command:
 ```sh
 ./docker/scripts/run-flink.sh --enable-flamegraph
 ```
-Once the services are up and running, you can access the Flink Job Manager UI at http://localhost:8084.
+Once the services are up and running, you can access the Flink Job Manager UI at http://localhost:8074.
 
 ### 3.9. To start the Kafka Producer, run:
 This script will start the Kafka Producer service, which continuously sends messages to a specified Kafka topic.
