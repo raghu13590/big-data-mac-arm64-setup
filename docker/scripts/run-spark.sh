@@ -6,6 +6,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Source common functions
 source "$SCRIPT_DIR/common-functions.sh"
 
+# Define the path to the Docker Compose file
+COMPOSE_FILE="$SCRIPT_DIR/../docker-compose/docker-compose-spark.yml"
+DOCKERFILE_DIR="$SCRIPT_DIR/../dockerfile/spark"
+
+# Check if Docker is running
+check_docker_running
+
+# Validate the Docker Compose file
+validate_compose_file "$COMPOSE_FILE"
+
+# Build the Spark image
+echo "Building Spark image..."
+docker build -t spark-local --build-arg SPARK_VERSION=3.1.2 "$DOCKERFILE_DIR"
+
 # Restart Zookeeper if it's not running
 "$SCRIPT_DIR/run-zookeeper.sh"
 

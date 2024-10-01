@@ -26,7 +26,7 @@ run_spark_job() {
     # Run the example job
     docker exec -it spark-master bash -c \
     "spark-submit --class org.apache.spark.examples.SparkPi \
-    --master $master /opt/bitnami/spark/examples/jars/spark-examples_2.12-3.5.2.jar 10" > /tmp/spark_test_output.txt 2>&1
+    --master $master /opt/spark-3.4.3/examples/jars/spark-examples_2.12-3.4.3.jar 10" > /tmp/spark_test_output.txt 2>&1
 
     # Check if the job succeeded by looking for output containing "Pi is roughly"
     if grep -q "Pi is roughly" /tmp/spark_test_output.txt; then
