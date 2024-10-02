@@ -47,24 +47,30 @@ test_hive() {
     local temp_log=$(mktemp)
 
     # Connect to HiveServer2 and create a test database
-    docker exec -i hiveserver2 beeline -u jdbc:hive2://hiveserver2:10000 -n hive -p hive -e "CREATE DATABASE IF NOT EXISTS test_db;" > "$temp_log" 2>&1
+    docker exec -i hiveserver2 beeline -u jdbc:hive2://hiveserver2:10000 -n hive -p hive \
+    -e "CREATE DATABASE IF NOT EXISTS test_db;" >> "$temp_log" 2>&1
 
     # Create a test table and insert sample data
-    docker exec -i hiveserver2 beeline -u jdbc:hive2://hiveserver2:10000 -n hive -p hive -e "USE test_db; CREATE TABLE IF NOT EXISTS test_table (id INT, name STRING); INSERT INTO test_table VALUES (1, 'John'), (2, 'Jane');" >> "$temp_log" 2>&1
+    docker exec -i hiveserver2 beeline -u jdbc:hive2://hiveserver2:10000 -n hive -p hive \
+    -e "USE test_db; CREATE TABLE IF NOT EXISTS test_table (id INT, name STRING); \
+    INSERT INTO test_table VALUES (1, 'John'), (2, 'Jane');" >> "$temp_log" 2>&1
 
     # Query the test table and verify the output
-    output=$(docker exec -i hiveserver2 beeline -u jdbc:hive2://hiveserver2:10000 -n hive -p hive -e "SELECT * FROM test_db.test_table;" >> "$temp_log" 2>&1)
+    output=$(docker exec -i hiveserver2 beeline -u jdbc:hive2://hiveserver2:10000 -n hive -p hive \
+    -e "SELECT * FROM test_db.test_table;")
+
     if echo "$output" | grep -q "John"; then
         echo "Hive test passed"
-        hive_test_status="passed"
+        return 0
     else
         echo "Hive test failed"
-        hive_test_status="failed"
         cat "$temp_log"
+        return 1
     fi
 
     # Clean up the test table and database
-    docker exec -i hiveserver2 beeline -u jdbc:hive2://hiveserver2:10000 -n hive -p hive -e "DROP TABLE IF EXISTS test_db.test_table; DROP DATABASE IF EXISTS test_db;" >> "$temp_log" 2>&1
+    docker exec -i hiveserver2 beeline -u jdbc:hive2://hiveserver2:10000 -n hive -p hive \
+    -e "DROP TABLE IF EXISTS test_db.test_table; DROP DATABASE IF EXISTS test_db;" >> "$temp_log" 2>&1
 
     rm "$temp_log"
 }
