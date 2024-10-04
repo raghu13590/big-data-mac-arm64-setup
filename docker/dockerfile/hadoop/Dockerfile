@@ -112,7 +112,7 @@ RUN git clone https://github.com/apache/hadoop.git /hadoop-src && \
     cp -r /hadoop-src/hadoop-dist/target/hadoop-$HADOOP_VERSION/* /opt/hadoop-$HADOOP_VERSION
 
 # Install Hive
-ENV HIVE_VERSION=4.0.0
+ENV HIVE_VERSION=4.0.1
 RUN wget https://downloads.apache.org/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_VERSION-bin.tar.gz && \
     tar -xzf apache-hive-$HIVE_VERSION-bin.tar.gz && \
     mv apache-hive-$HIVE_VERSION-bin /opt/hive-$HIVE_VERSION && \

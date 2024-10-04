@@ -138,11 +138,11 @@ services:
       - postgres
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-      - ../configs/hadoop/hive-site.xml:/opt/hive-4.0.0/conf/hive-site.xml
-      - ../app-data/metastore:/opt/hive-4.0.0/metastore_db
+      - ../configs/hadoop/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
+      - ../app-data/metastore:/opt/hive-4.0.1/metastore_db
     environment:
       - HADOOP_HOME=/opt/hadoop-3.3.6
-      - HIVE_HOME=/opt/hive-4.0.0
+      - HIVE_HOME=/opt/hive-4.0.1
     command: metastore
     networks:
       - big-data-network
@@ -160,11 +160,11 @@ services:
       - metastore
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-      - ../configs/hadoop/hive-site.xml:/opt/hive-4.0.0/conf/hive-site.xml
+      - ../configs/hadoop/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
       - ../app-data/hive/source-data:/source-data
     environment:
       - HADOOP_HOME=/opt/hadoop-3.3.6
-      - HIVE_HOME=/opt/hive-4.0.0
+      - HIVE_HOME=/opt/hive-4.0.1
     ports:
       - "10000:10000"
     command: hiveserver2
