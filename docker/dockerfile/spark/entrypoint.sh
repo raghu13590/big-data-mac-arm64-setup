@@ -1,11 +1,22 @@
 #!/bin/bash
-# entrypoint.sh
 
-# Start Spark master
-$SPARK_HOME/sbin/start-master.sh
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64
+export HADOOP_HOME=/opt/hadoop-3.3.6
+export SPARK_HOME=/opt/spark
+export PATH=$PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$SPARK_HOME/bin
 
-# Start Spark worker
-$SPARK_HOME/sbin/start-worker.sh spark://$(hostname):7077
+echo "JAVA_HOME: $JAVA_HOME"
+echo "HADOOP_HOME: $HADOOP_HOME"
+echo "SPARK_HOME: $SPARK_HOME"
+echo "PATH: $PATH"
 
-# Keep the container running
-tail -f /dev/null
+ls -l $SPARK_HOME/bin
+which spark-class
+
+# Source Spark environment variables
+if [ -f "$SPARK_HOME/conf/spark-env.sh" ]; then
+  source "$SPARK_HOME/conf/spark-env.sh"
+fi
+
+# Execute the command passed to the container
+exec "$@"

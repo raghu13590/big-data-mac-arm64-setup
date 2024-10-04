@@ -18,7 +18,7 @@ validate_compose_file "$COMPOSE_FILE"
 
 # Build the Spark image
 echo "Building Spark image..."
-docker build -t spark-local --build-arg SPARK_VERSION=3.1.2 "$DOCKERFILE_DIR"
+docker build -t spark-local --build-arg SPARK_VERSION=3.4.3 "$DOCKERFILE_DIR"
 
 # Restart Zookeeper if it's not running
 "$SCRIPT_DIR/run-zookeeper.sh"

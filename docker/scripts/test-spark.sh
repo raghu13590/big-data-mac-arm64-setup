@@ -3,58 +3,64 @@
 # Get the directory of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Install curl inside the spark-master container without showing logs
-install_curl() {
-    echo "Installing curl in spark-master container..."
-    docker exec -u root -it spark-master bash -c "apt-get update > /dev/null 2>&1 && apt-get install -y curl > /dev/null 2>&1"
-    if [ $? -eq 0 ]; then
-        echo "curl installed successfully!"
+# Helper function to run a command and check its success
+run_command() {
+    local command="$1"
+    local description="$2"
+    local output_file="/tmp/command_output.txt"
+
+    echo "Running test: $description"
+    docker exec -it spark-master bash -c "$command" > "$output_file" 2>&1
+    local exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "Test passed: $description"
     else
-        echo "Failed to install curl!" >&2
-        exit 1
+        echo "Test failed: $description"
+        echo "Command output:"
+        cat "$output_file"
     fi
 }
 
-# Helper function to run a Spark job and check its success
+# Test HDFS connectivity
+test_hdfs_connectivity() {
+    run_command "hdfs dfs -ls /" "HDFS connectivity"
+}
+
+# Test HDFS read and write operations
+test_hdfs_read_write() {
+    local timestamp=$(date +%s)
+    local test_file="/tmp/testfile_${timestamp}.txt"
+    run_command "echo 'Hello HDFS' | hdfs dfs -put - $test_file && hdfs dfs -cat $test_file" "HDFS read and write operations"
+}
+
+# Run Spark job
 run_spark_job() {
-    local mode=$1
-    local master=$2
-    local test_description=$3
+    local mode="$1"
+    local master="$2"
+    local test_description="$3"
 
-    echo "Running test: $test_description"
-
-    # Run the example job
-    docker exec -it spark-master bash -c \
-    "spark-submit --class org.apache.spark.examples.SparkPi \
-    --master $master /opt/spark-3.4.3/examples/jars/spark-examples_2.12-3.4.3.jar 10" > /tmp/spark_test_output.txt 2>&1
-
-    # Check if the job succeeded by looking for output containing "Pi is roughly"
-    if grep -q "Pi is roughly" /tmp/spark_test_output.txt; then
-        echo "Test passed: $test_description"
-    else
-        echo "Test failed: $test_description"
-        cat /tmp/spark_test_output.txt
-    fi
+    run_command "spark-submit --class org.apache.spark.examples.SparkPi \
+    --master $master \
+    --conf spark.eventLog.enabled=false \
+    /opt/spark/examples/jars/spark-examples_2.12-3.4.3.jar 10" "$test_description"
 }
 
-# Check if YARN is available by using curl to check the ResourceManager's web UI
-is_yarn_available() {
-    if docker exec -it spark-master bash -c "curl -s -L -o /dev/null -w '%{http_code}' resourcemanager:8088" | grep -q "200"; then
-        return 0  # YARN is up
-    else
-        return 1  # YARN is not available
-    fi
+# Create Spark history directory
+create_spark_history_dir() {
+    run_command "mkdir -p /opt/spark/history && chmod 777 /opt/spark/history" "Creating Spark history directory"
 }
 
 echo "Running Spark tests..."
 
-# Install curl if it's not available
-docker exec -it spark-master bash -c "which curl > /dev/null 2>&1"
-if [ $? -ne 0 ]; then
-    install_curl
-else
-    echo "curl is already installed."
-fi
+# Create Spark history directory
+create_spark_history_dir
+
+# Test HDFS connectivity
+test_hdfs_connectivity
+
+# Test HDFS read and write operations
+test_hdfs_read_write
 
 # Test in standalone mode
 run_spark_job "standalone" "spark://spark-master:7077" "Standalone mode (Spark cluster)"
@@ -66,13 +72,13 @@ run_spark_job "local" "local" "Local mode (1 core)"
 run_spark_job "local[*]" "local[*]" "Local mode (all cores)"
 
 # Check if YARN is available before running YARN-related tests
-if is_yarn_available; then
+if docker exec -it spark-master bash -c "curl -s -L -o /dev/null -w '%{http_code}' resourcemanager:8088" | grep -q "200"; then
     echo "YARN is available, running YARN tests..."
-    # Test with YARN in client mode (if YARN is available)
-    run_spark_job "yarn-client" "yarn" "YARN client mode (YARN cluster)"
+    # Test with YARN in client mode
+    run_spark_job "yarn" "yarn --deploy-mode client" "YARN client mode (YARN cluster)"
 
-    # Test with YARN in cluster mode (if YARN is available)
-    run_spark_job "yarn-cluster" "yarn" "YARN cluster mode (YARN cluster)"
+    # Test with YARN in cluster mode
+    run_spark_job "yarn-cluster" "yarn --deploy-mode cluster" "YARN cluster mode (YARN cluster)"
 else
     echo "YARN is not available, skipping YARN tests."
 fi

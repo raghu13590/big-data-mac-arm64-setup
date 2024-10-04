@@ -1,9 +1,7 @@
-# Keep only one LD_PRELOAD entry
-LD_PRELOAD=/opt/bitnami/common/lib/libnss_wrapper.so
-
-# Environment variables for Hadoop and YARN
-export HADOOP_CONF_DIR=/opt/bitnami/hadoop/conf
-export YARN_CONF_DIR=/opt/bitnami/hadoop/conf
-
-# Set Spark to use YARN as the master
-export SPARK_MASTER=yarnLD_PRELOAD=/opt/bitnami/common/lib/libnss_wrapper.so
+# Set Spark-specific environment variables
+export SPARK_MASTER_HOST='spark-master'
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64
+export HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
+export YARN_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
+export HADOOP_HOME=/opt/hadoop-3.3.6
+export SPARK_DIST_CLASSPATH=$($HADOOP_HOME/bin/hadoop classpath)

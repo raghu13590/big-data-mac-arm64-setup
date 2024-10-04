@@ -1,76 +1,40 @@
-# Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.
+# Dockerfile for Spark Cluster
 
+# Use Ubuntu focal as the base image
 FROM ubuntu:focal
 
-# Use bash shell for all RUN commands with pipefail option
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# Set the Spark and Hadoop versions as arguments
+ARG SPARK_VERSION=3.4.3
+ARG HADOOP_VERSION=3.3.6
 
-# Disable suggests/recommends to reduce image size
-RUN echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/10disableextras && \
-    echo 'APT::Install-Suggests "0";' >> /etc/apt/apt.conf.d/10disableextras
-
-ENV DEBIAN_FRONTEND=noninteractive
-ENV DEBCONF_TERSE=true
-
-# Set working directory to /root for initial setup
-WORKDIR /root
-
-# Install required packages
-RUN apt-get -q update && \
-    apt-get -q install -y --no-install-recommends \
-        wget \
-        gnupg \
-        software-properties-common \
-        lsb-release \
-        python3 \
-        git \
-        openjdk-11-jdk \
-        curl \
-        ca-certificates \
-        locales \
-        netcat \
-        net-tools \
-        less \
-        nano && \
-    apt-get clean && \
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y openjdk-11-jdk wget curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Set locale
-RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
-    locale-gen en_US.UTF-8
-ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
-ENV PYTHONIOENCODING=utf-8
-
-# Set environment variables required to run Spark
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64
+# Install Hadoop
+RUN wget https://downloads.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz && \
+    tar -xzf hadoop-${HADOOP_VERSION}.tar.gz -C /opt && \
+    rm hadoop-${HADOOP_VERSION}.tar.gz
 
 # Install Spark
-ENV SPARK_VERSION=3.4.3
-RUN wget https://archive.apache.org/dist/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop3.tgz && \
-    tar -xzf spark-$SPARK_VERSION-bin-hadoop3.tgz && \
-    mv spark-$SPARK_VERSION-bin-hadoop3 /opt/spark-$SPARK_VERSION && \
-    rm spark-$SPARK_VERSION-bin-hadoop3.tgz
+RUN wget https://downloads.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+    tar -xzf spark-${SPARK_VERSION}-bin-hadoop3.tgz -C /opt && \
+    mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark && \
+    rm spark-${SPARK_VERSION}-bin-hadoop3.tgz
 
-ENV SPARK_HOME=/opt/spark-$SPARK_VERSION
-ENV PATH=$SPARK_HOME/bin:$PATH
+# Set environment variables
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64
+ENV HADOOP_HOME=/opt/hadoop-${HADOOP_VERSION}
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$SPARK_HOME/bin
 
-# Create a non-root user 'spark' with a home directory
-RUN useradd -ms /bin/bash spark
+# Copy entrypoint script
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Add spark to supergroup for full HDFS permissions
-RUN groupadd supergroup && \
-    usermod -aG supergroup spark
+# Expose ports for Spark UI
+EXPOSE 8082 8083 8084 7077 18080
 
-# Switch to 'spark' user
-USER spark
-WORKDIR /home/spark
-
-# Copy the entrypoint script
-COPY --chown=spark:spark entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Set the entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
-
-# Set default command
-CMD ["/bin/bash"]
+# Set the entrypoint script
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
