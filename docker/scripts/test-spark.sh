@@ -22,19 +22,20 @@ run_command() {
     fi
 }
 
-# Test HDFS connectivity
-test_hdfs_connectivity() {
-    run_command "hdfs dfs -ls /" "HDFS connectivity"
+# Test HDFS read/write using spark-submit with Python script
+test_hdfs_read_write_with_spark() {
+    echo "Running HDFS read/write test with Spark"
+
+    # Copy the Python script into the container
+    docker cp hdfs_test.py spark-master:/opt/spark/hdfs_test.py
+
+    # Run the Python script using spark-submit
+    run_command \
+    "spark-submit --master spark://spark-master:7077 /opt/spark/hdfs_test.py" \
+    "HDFS read/write test with PySpark"
 }
 
-# Test HDFS read and write operations
-test_hdfs_read_write() {
-    local timestamp=$(date +%s)
-    local test_file="/tmp/testfile_${timestamp}.txt"
-    run_command "echo 'Hello HDFS' | hdfs dfs -put - $test_file && hdfs dfs -cat $test_file" "HDFS read and write operations"
-}
-
-# Run Spark job
+# Run SparkPi job without output to test basic Spark job submission
 run_spark_job() {
     local mode="$1"
     local master="$2"
@@ -56,11 +57,8 @@ echo "Running Spark tests..."
 # Create Spark history directory
 create_spark_history_dir
 
-# Test HDFS connectivity
-test_hdfs_connectivity
-
-# Test HDFS read and write operations
-test_hdfs_read_write
+# Test HDFS read and write using Spark (via Python script)
+test_hdfs_read_write_with_spark
 
 # Test in standalone mode
 run_spark_job "standalone" "spark://spark-master:7077" "Standalone mode (Spark cluster)"
