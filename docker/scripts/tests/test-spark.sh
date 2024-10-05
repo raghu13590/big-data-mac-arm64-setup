@@ -3,22 +3,27 @@
 # Get the directory of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Initialize test statuses
+hdfs_test_status="not run"
+standalone_test_status="not run"
+local_test_status="not run"
+local_all_cores_test_status="not run"
+yarn_client_test_status="not run"
+yarn_cluster_test_status="not run"
+
 # Helper function to run a command and check its success
 run_command() {
     local command="$1"
     local description="$2"
     local output_file="/tmp/command_output.txt"
 
-    echo "Running test: $description"
     docker exec -it spark-master bash -c "$command" > "$output_file" 2>&1
     local exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
-        echo "Test passed: $description"
+        return 0
     else
-        echo "Test failed: $description"
-        echo "Command output:"
-        cat "$output_file"
+        return 1
     fi
 }
 
@@ -33,9 +38,15 @@ test_hdfs_read_write_with_spark() {
     docker exec -it spark-master bash -c "ls /opt/spark/hdfs_test.py"
 
     # Run the Python script using spark-submit
-    run_command \
-    "spark-submit --master spark://spark-master:7077 /opt/spark/hdfs_test.py" \
+    run_command "spark-submit --master spark://spark-master:7077 /opt/spark/hdfs_test.py" \
     "HDFS read/write test with PySpark"
+
+    # Update test status
+    if [ $? -eq 0 ]; then
+        hdfs_test_status="passed"
+    else
+        hdfs_test_status="failed"
+    fi
 }
 
 # Run SparkPi job without output to test basic Spark job submission
@@ -44,10 +55,31 @@ run_spark_job() {
     local master="$2"
     local test_description="$3"
 
+    echo "Running $test_description"
+
     run_command "spark-submit --class org.apache.spark.examples.SparkPi \
     --master $master \
     --conf spark.eventLog.enabled=false \
     /opt/spark/examples/jars/spark-examples_2.12-3.4.3.jar 10" "$test_description"
+
+    # Update test status based on the description
+    case "$test_description" in
+        "Standalone mode (Spark cluster)")
+            [ $? -eq 0 ] && standalone_test_status="passed" || standalone_test_status="failed"
+            ;;
+        "Local mode (1 core)")
+            [ $? -eq 0 ] && local_test_status="passed" || local_test_status="failed"
+            ;;
+        "Local mode (all cores)")
+            [ $? -eq 0 ] && local_all_cores_test_status="passed" || local_all_cores_test_status="failed"
+            ;;
+        "YARN client mode (YARN cluster)")
+            [ $? -eq 0 ] && yarn_client_test_status="passed" || yarn_client_test_status="failed"
+            ;;
+        "YARN cluster mode (YARN cluster)")
+            [ $? -eq 0 ] && yarn_cluster_test_status="passed" || yarn_cluster_test_status="failed"
+            ;;
+    esac
 }
 
 # Create Spark history directory
@@ -83,5 +115,15 @@ if docker exec -it spark-master bash -c "curl -s -L -o /dev/null -w '%{http_code
 else
     echo "YARN is not available, skipping YARN tests."
 fi
+
+# Display test results
+echo ""
+echo "Test Results:"
+echo "HDFS read/write test: $hdfs_test_status"
+echo "Standalone mode test: $standalone_test_status"
+echo "Local mode (1 core) test: $local_test_status"
+echo "Local mode (all cores) test: $local_all_cores_test_status"
+echo "YARN client mode test: $yarn_client_test_status"
+echo "YARN cluster mode test: $yarn_cluster_test_status"
 
 echo "All tests completed!"

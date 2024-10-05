@@ -14,15 +14,13 @@ execute_in_container() {
 
 # Function to test HDFS
 test_hdfs() {
-    echo "Testing HDFS..."
+    echo "Running HDFS test..."
     execute_in_container namenode "hdfs dfs -mkdir -p /test/input"
     execute_in_container namenode "echo 'Hello, World!' | hdfs dfs -put - /test/input/hello.txt"
     local output=$(execute_in_container namenode "hdfs dfs -cat /test/input/hello.txt")
     if [ "$output" == "Hello, World!" ]; then
-        echo "HDFS test passed"
         return 0
     else
-        echo "HDFS test failed"
         return 1
     fi
     execute_in_container namenode "hdfs dfs -rm -r /test"
@@ -30,20 +28,18 @@ test_hdfs() {
 
 # Function to test YARN
 test_yarn() {
-    echo "Testing YARN..."
+    echo "Running YARN test..."
     local output=$(execute_in_container resourcemanager "yarn jar /opt/hadoop-3.3.6/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar pi 2 10")
     if echo "$output" | grep -q "Estimated value of Pi is"; then
-        echo "YARN test passed"
         return 0
     else
-        echo "YARN test failed"
         return 1
     fi
 }
 
 # Function to test Hive
 test_hive() {
-    echo "Testing Hive..."
+    echo "Running Hive test..."
     local temp_log=$(mktemp)
 
     # Connect to HiveServer2 and create a test database
@@ -60,11 +56,8 @@ test_hive() {
     -e "SELECT * FROM test_db.test_table;")
 
     if echo "$output" | grep -q "John"; then
-        echo "Hive test passed"
         return 0
     else
-        echo "Hive test failed"
-        cat "$temp_log"
         return 1
     fi
 
@@ -92,21 +85,22 @@ hdfs_test_status="not run"
 yarn_test_status="not run"
 hive_test_status="not run"
 
-# Test HDFS
+# Run HDFS test
+echo "Running tests..."
 if test_hdfs; then
     hdfs_test_status="passed"
 else
     hdfs_test_status="failed"
 fi
 
-# Test YARN
+# Run YARN test
 if test_yarn; then
     yarn_test_status="passed"
 else
     yarn_test_status="failed"
 fi
 
-# Test Hive
+# Run Hive test
 if test_hive; then
     hive_test_status="passed"
 else
@@ -114,6 +108,7 @@ else
 fi
 
 # Display test results
+echo ""
 echo "Test Results:"
 echo "HDFS test: $hdfs_test_status"
 echo "YARN test: $yarn_test_status"

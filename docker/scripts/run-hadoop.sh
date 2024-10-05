@@ -80,8 +80,7 @@ start_and_verify_service "postgres"
 start_and_verify_service "metastore"
 start_and_verify_service "hiveserver2"
 
-# Run the test script
-echo "Running tests..."
-"$SCRIPT_DIR/tests/test-hadoop.sh"
+echo "All services are up and running!"
 
-echo "Hadoop cluster is now running."
+# Run the test script
+"$SCRIPT_DIR/tests/test-hadoop.sh"
