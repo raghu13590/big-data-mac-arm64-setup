@@ -10,9 +10,9 @@ data = [("Alice", 34), ("Bob", 45), ("Catherine", 29)]
 columns = ["Name", "Age"]
 df = spark.createDataFrame(data, columns)
 
-# Write the DataFrame to HDFS
+# Write the DataFrame to HDFS with overwrite mode
 hdfs_write_path = "hdfs://namenode:9000/user/spark/output/sample_data.parquet"
-df.write.parquet(hdfs_write_path)
+df.write.mode("overwrite").parquet(hdfs_write_path)
 
 # Read the DataFrame back from HDFS
 df_read = spark.read.parquet(hdfs_write_path)

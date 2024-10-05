@@ -82,6 +82,6 @@ start_and_verify_service "hiveserver2"
 
 # Run the test script
 echo "Running tests..."
-"$SCRIPT_DIR/test-hadoop.sh"
+"$SCRIPT_DIR/tests/test-hadoop.sh"
 
 echo "Hadoop cluster is now running."

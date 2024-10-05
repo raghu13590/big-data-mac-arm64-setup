@@ -26,8 +26,11 @@ run_command() {
 test_hdfs_read_write_with_spark() {
     echo "Running HDFS read/write test with Spark"
 
-    # Copy the Python script into the container
-    docker cp hdfs_test.py spark-master:/opt/spark/hdfs_test.py
+    # Use the relative path to hdfs_test.py
+    docker cp "$SCRIPT_DIR/hdfs_test.py" spark-master:/opt/spark/hdfs_test.py
+
+    # Check if the file is copied correctly
+    docker exec -it spark-master bash -c "ls /opt/spark/hdfs_test.py"
 
     # Run the Python script using spark-submit
     run_command \
