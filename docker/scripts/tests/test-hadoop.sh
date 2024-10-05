@@ -86,6 +86,7 @@ yarn_test_status="not run"
 hive_test_status="not run"
 
 # Run HDFS test
+echo ""
 echo "Running tests..."
 if test_hdfs; then
     hdfs_test_status="passed"

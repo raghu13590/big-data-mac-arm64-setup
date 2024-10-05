@@ -18,6 +18,8 @@ services:
       - ../configs/hadoop/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
       - ../configs/hadoop/hive-site.xml:/opt/hive/hive-site.xml
       - ../app-data/spark/history:/opt/spark/history
+      - ../app-data/spark/datasets:/opt/spark/datasets
+      - ../app-data/spark/local-jars:/opt/spark/local-jars
     networks:
       - big-data-network
     command: ["spark-class", "org.apache.spark.deploy.master.Master", "--webui-port", "8082"]
@@ -49,6 +51,8 @@ services:
       - ../configs/hadoop/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
       - ../configs/hadoop/hive-site.xml:/opt/hive/hive-site.xml
       - ../app-data/spark/history:/opt/spark/history
+      - ../app-data/spark/datasets:/opt/spark/datasets
+      - ../app-data/spark/local-jars:/opt/spark/local-jars
     networks:
       - big-data-network
     command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "8083"]
@@ -80,6 +84,8 @@ services:
       - ../configs/hadoop/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
       - ../configs/hadoop/hive-site.xml:/opt/hive/hive-site.xml
       - ../app-data/spark/history:/opt/spark/history
+      - ../app-data/spark/datasets:/opt/spark/datasets
+      - ../app-data/spark/local-jars:/opt/spark/local-jars
     networks:
       - big-data-network
     command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "8084"]

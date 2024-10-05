@@ -87,6 +87,7 @@ create_spark_history_dir() {
     run_command "mkdir -p /opt/spark/history && chmod 777 /opt/spark/history" "Creating Spark history directory"
 }
 
+echo ""
 echo "Running Spark tests..."
 
 # Create Spark history directory
