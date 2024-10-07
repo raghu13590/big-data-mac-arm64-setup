@@ -5,10 +5,16 @@ export HADOOP_HOME=/opt/hadoop-3.3.6
 export SPARK_HOME=/opt/spark
 export PATH=$PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$SPARK_HOME/bin
 
+# Enable remote debugging if specified
+if [ "$ENABLE_DEBUG" = "true" ]; then
+    export JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+fi
+
 echo "JAVA_HOME: $JAVA_HOME"
 echo "HADOOP_HOME: $HADOOP_HOME"
 echo "SPARK_HOME: $SPARK_HOME"
 echo "PATH: $PATH"
+echo "JAVA_OPTS: $JAVA_OPTS"
 
 ls -l $SPARK_HOME/bin
 which spark-class

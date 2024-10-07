@@ -85,16 +85,35 @@ Open ZooNavigator in your browser at http://localhost:9001.
 ```
 This script will start the Spark master and worker services and ensure they are running and healthy.
 Once the services are up and running, you can access the Spark Master UI at http://localhost:8082 and the Spark Worker UI at http://localhost:8083.
-Place your Spark job JAR files in the `docker/service-data/spark/jobs` folder and data files in the `docker/service-data/spark/data` folder.
+Place your Spark job JAR files in the `docker/app-data/spark/local-jars` folder. Optionally you can place data files in the `docker/app-data/spark/datasets` folder and modify the Spark job accordingly to read the data files from the datasets folder.
 To run a Spark job, use the following command:
 ```sh
-docker exec -it spark-master /opt/bitnami/spark/bin/spark-submit \
+docker exec -it spark-master
+
+spark-submit \
     --master spark://spark-master:7077 \
     --class com.abc.MainClass \
     --executor-memory 1G \
     --total-executor-cores 1 \
-    /opt/bitnami/spark/custom-jars/jarname.jar
+    /opt/bitnami/spark/local-jars/yourjar.jar
 ```
+
+to debug the spark job with remote debugging, you can use the following command:
+```sh
+docker exec -it spark-master
+
+spark-submit \
+  --master spark://spark-master:7077 \
+  --class com.abc.MainClass \
+  --executor-memory 1G \
+  --total-executor-cores 1 \
+  --conf "spark.driver.extraJavaOptions=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" \
+  --conf "spark.executor.extraJavaOptions=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" \
+   /opt/bitnami/spark/local-jars/yourjar.jar
+```
+to step through the code in the spark job,set suspend=y in the above command and then attach the debugger in your IDE to the port 5005.
+for example, In IntelliJ IDEA, you can create a new Remote configuration and attach it to the port 5005.
+go to Run -> Edit Configurations -> Add New Configuration -> Remote -> set the port to 5005 and hostname to localhost and click on the debug button.
 
 ### 3.8. To start Flink, run:
 ```sh

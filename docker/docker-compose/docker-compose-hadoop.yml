@@ -8,6 +8,7 @@ services:
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../app-data/hadoop/namenode:/hadoop/dfs/name
+      - ../app-data/hadoop/datasets:/datasets
     environment:
       - HADOOP_HOME=/opt/hadoop-3.3.6
     command: namenode
@@ -26,6 +27,7 @@ services:
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../app-data/hadoop/datanode1:/hadoop/dfs/data
+      - ../app-data/hadoop/datasets:/datasets
     environment:
       - HADOOP_HOME=/opt/hadoop-3.3.6
     command: datanode
@@ -44,6 +46,7 @@ services:
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../app-data/hadoop/datanode2:/hadoop/dfs/data
+      - ../app-data/hadoop/datasets:/datasets
     environment:
       - HADOOP_HOME=/opt/hadoop-3.3.6
     command: datanode
@@ -161,7 +164,7 @@ services:
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../configs/hadoop/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
-      - ../app-data/hive/source-data:/source-data
+      - ../app-data/hadoop/datasets:/datasets
     environment:
       - HADOOP_HOME=/opt/hadoop-3.3.6
       - HIVE_HOME=/opt/hive-4.0.1
