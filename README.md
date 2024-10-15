@@ -95,7 +95,7 @@ spark-submit \
     --class com.abc.MainClass \
     --executor-memory 1G \
     --total-executor-cores 1 \
-    /opt/bitnami/spark/local-jars/yourjar.jar
+    /opt/spark/local-jars/yourjar.jar
 ```
 
 to debug the spark job with remote debugging, you can use the following command:
@@ -109,7 +109,7 @@ spark-submit \
   --total-executor-cores 1 \
   --conf "spark.driver.extraJavaOptions=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" \
   --conf "spark.executor.extraJavaOptions=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" \
-   /opt/bitnami/spark/local-jars/yourjar.jar
+   /opt/spark/local-jars/yourjar.jar
 ```
 to step through the code in the spark job,set suspend=y in the above command and then attach the debugger in your IDE to the port 5005.
 for example, In IntelliJ IDEA, you can create a new Remote configuration and attach it to the port 5005.
