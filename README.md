@@ -111,7 +111,7 @@ spark-submit \
   --conf "spark.executor.extraJavaOptions=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" \
    /opt/spark/local-jars/yourjar.jar
 ```
-to step through the code in the spark job,set suspend=y in the above command and then attach the debugger in your IDE to the port 5005.
+to step through the code in the spark job,**set suspend=y** in the above command and then attach the debugger in your IDE to the port 5005.
 for example, In IntelliJ IDEA, you can create a new Remote configuration and attach it to the port 5005.
 go to Run -> Edit Configurations -> Add New Configuration -> Remote -> set the port to 5005 and hostname to localhost and click on the debug button.
 
