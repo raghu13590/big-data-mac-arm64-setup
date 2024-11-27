@@ -12,10 +12,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install OpenJDK and other dependencies
 RUN apt-get update && \
     apt-get install -y openjdk-11-jdk wget curl python3 python3-pip tzdata && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* \
 
 # Install Spark
-RUN wget https://downloads.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
     tar -xzf spark-${SPARK_VERSION}-bin-hadoop3.tgz -C /opt && \
     mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark && \
     rm spark-${SPARK_VERSION}-bin-hadoop3.tgz
@@ -28,6 +28,11 @@ ENV PATH=$PATH:$JAVA_HOME/bin:$SPARK_HOME/bin
 # Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Copy C source files and compile them
+COPY src/*.c /opt/c-programs/
+WORKDIR /opt/c-programs
+RUN gcc -o my_program *.c
 
 # Expose ports for Spark UI
 EXPOSE 8082 8083 8084 7077 18080

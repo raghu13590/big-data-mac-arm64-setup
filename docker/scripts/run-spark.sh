@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Get the directory of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -27,10 +28,10 @@ docker build -t spark-local --build-arg SPARK_VERSION=3.4.3 "$DOCKERFILE_DIR"
 verify_service "zookeeper"
 
 # Restart Spark services if they are not running
-restart_service "spark-master" "$SCRIPT_DIR/../docker-compose/docker-compose-spark.yml" "spark-master"
-restart_service "spark-history" "$SCRIPT_DIR/../docker-compose/docker-compose-spark.yml" "spark-history"
-restart_service "spark-worker-1" "$SCRIPT_DIR/../docker-compose/docker-compose-spark.yml" "spark-worker-1"
-restart_service "spark-worker-2" "$SCRIPT_DIR/../docker-compose/docker-compose-spark.yml" "spark-worker-2"
+restart_service "spark-master" "$COMPOSE_FILE" "spark-master"
+restart_service "spark-history" "$COMPOSE_FILE" "spark-history"
+restart_service "spark-worker-1" "$COMPOSE_FILE" "spark-worker-1"
+restart_service "spark-worker-2" "$COMPOSE_FILE" "spark-worker-2"
 
 echo "All services are up and running!"
 
