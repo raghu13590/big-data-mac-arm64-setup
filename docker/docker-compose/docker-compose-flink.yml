@@ -5,10 +5,7 @@ services:
     ports:
       - "8074:8074"
     environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager
-        env.java.opts: -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename=/opt/flink/jfr/jobmanager.jfr
+      - FLINK_PROPERTIES=jobmanager.rpc.address:jobmanager
       - HADOOP_HOME=/opt/hadoop-3.3.6
       - HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
     command: /opt/flink/bin/jobmanager.sh start-foreground
@@ -19,10 +16,10 @@ services:
       retries: 5
     volumes:
       - flink_jobmanager_data:/opt/flink
-      - ../configs/flink/flink-conf.yaml:/opt/flink/conf/flink-conf.yaml # mount for custom flink-conf.yaml
+      - ../configs/flink/flink-conf.yaml:/opt/flink/conf/flink-conf.yaml
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-      - ../app-data/flink/data:/opt/flink/data # mount for data files
-      - ../app-data/flink/jars:/opt/flink/jars # mount for jar files
+      - ../app-data/flink/data:/opt/flink/data
+      - ../app-data/flink/jars:/opt/flink/jars
     networks:
       - big-data-network
 
@@ -32,11 +29,7 @@ services:
     depends_on:
       - jobmanager
     environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 20
-        env.java.opts: -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=filename=/opt/flink/jfr/taskmanager.jfr
+      - FLINK_PROPERTIES=taskmanager.rpc.address:taskmanager
       - HADOOP_HOME=/opt/hadoop-3.3.6
       - HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
     command: /opt/flink/bin/taskmanager.sh start-foreground
@@ -47,10 +40,10 @@ services:
       retries: 5
     volumes:
       - flink_taskmanager_data:/opt/flink
-      - ../configs/flink/flink-conf.yaml:/opt/flink/conf/flink-conf.yaml # mount for custom flink-conf.yaml
+      - ../configs/flink/flink-conf.yaml:/opt/flink/conf/flink-conf.yaml
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-      - ../app-data/flink/data:/opt/flink/data # mount for data files
-      - ../app-data/flink/jars:/opt/flink/jars # mount for jar files
+      - ../app-data/flink/data:/opt/flink/data
+      - ../app-data/flink/jars:/opt/flink/jars
     networks:
       - big-data-network
 

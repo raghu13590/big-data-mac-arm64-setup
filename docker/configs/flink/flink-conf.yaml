@@ -1,12 +1,41 @@
 blob.server.port: 6124
 rest.port: 8074
 taskmanager.log.path: /opt/flink/log
-taskmanager.memory.process.size: 1024m
+taskmanager.memory.process.size: 1568m
 jobmanager.web.log.path: /opt/flink/log
-env.java.opts: -XX:+UnlockCommercialFeatures-XX:+FlightRecorder-XX:StartFlightRecording=filename=/opt/flink/jfr/taskmanager.jfr
 jobmanager.rpc.address: jobmanager
-taskmanager.numberOfTaskSlots: 20
+taskmanager.numberOfTaskSlots: 8
+yarn.containers.vcores: 8
 jobmanager.web.submit.enable: true
-jobmanager.memory.process.size: 1024m
+jobmanager.memory.process.size: 1568m
 query.server.port: 6125
-#rest.flamegraph.enabled: true
+
+# Hadoop configurations
+fs.default-scheme: hdfs://namenode:9000
+fs.hdfs.hadoopconf: /opt/hadoop-3.3.6/etc/hadoop
+fs.hdfs.impl.disable.cache: true
+yarn.application.classpath: $HADOOP_CONF_DIR,$HADOOP_COMMON_HOME/*,$HADOOP_COMMON_HOME/lib/*,$HADOOP_HDFS_HOME/*,$HADOOP_HDFS_HOME/lib/*,$HADOOP_YARN_HOME/*,$HADOOP_YARN_HOME/lib/*
+yarn.provided.lib.dirs: hdfs:///flink/lib
+env.hadoop.conf.dir: /opt/hadoop-3.3.6/etc/hadoop
+env.yarn.conf.dir: /opt/hadoop-3.3.6/etc/hadoop
+classloader.resolve-order: parent-first
+
+# YARN specific configurations
+yarn.application.attempts: 1
+yarn.application.priority: 1
+yarn.resourcemanager.address: resourcemanager:8032
+yarn.ship-files: /opt/flink/conf
+yarn.application-master.env.HADOOP_USER_NAME: hdfs
+yarn.tags: flink
+
+# Additional HDFS configurations
+fs.defaultFS: hdfs://namenode:9000
+hadoop.rpc.socket.factory.class.default: org.apache.hadoop.net.StandardSocketFactory
+
+# Add this to your flink-conf.yaml
+classloader.check-leaked-classloader: false
+
+# File system configurations
+fs.hdfs.impl: org.apache.hadoop.hdfs.DistributedFileSystem
+fs.file.impl: org.apache.hadoop.fs.LocalFileSystem
+fs.file.impl.disable.cache: true

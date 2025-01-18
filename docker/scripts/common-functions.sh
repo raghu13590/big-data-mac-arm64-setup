@@ -44,7 +44,7 @@ verify_service() {
             if [ $retries -eq 0 ]; then
                 echo "$(timestamp) [INFO] Waiting for $service_name to become healthy..."
             fi
-            sleep 30
+            sleep 10
         fi
         retries=$((retries+1))
     done
