@@ -22,6 +22,8 @@ services:
     image: hadoop:3.3.6
     container_name: datanode1
     hostname: datanode1
+    depends_on:
+      - namenode
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../app-data/hadoop/datanode1:/hadoop/dfs/data
@@ -39,6 +41,8 @@ services:
     image: hadoop:3.3.6
     container_name: datanode2
     hostname: datanode2
+    depends_on:
+      - namenode
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../app-data/hadoop/datanode2:/hadoop/dfs/data
@@ -56,6 +60,8 @@ services:
     image: hadoop:3.3.6
     container_name: resourcemanager
     hostname: resourcemanager
+    depends_on:
+      - namenode
     ports:
       - "8088:8088"
     volumes:
@@ -73,6 +79,8 @@ services:
     image: hadoop:3.3.6
     container_name: nodemanager1
     hostname: nodemanager1
+    depends_on:
+      - resourcemanager
     ports:
       - "8042:8042"
     volumes:
@@ -90,6 +98,8 @@ services:
     image: hadoop:3.3.6
     container_name: nodemanager2
     hostname: nodemanager2
+    depends_on:
+      - resourcemanager
     ports:
       - "8043:8042"
     volumes:
