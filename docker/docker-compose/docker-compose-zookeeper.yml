@@ -5,7 +5,7 @@ services:
     hostname: zookeeper1
     ports:
       - "2181:2181"
-      - "8080:8080"
+      - "2280:8080"
     environment:
       - ZOO_SERVER_ID=1
       - ZOO_SERVERS=0.0.0.0:2888:3888,zookeeper2:2888:3888
@@ -29,7 +29,7 @@ services:
     hostname: zookeeper2
     ports:
       - "2182:2181"
-      - "8081:8080"
+      - "2281:8080"
     environment:
       - ZOO_SERVER_ID=2
       - ZOO_SERVERS=zookeeper1:2888:3888,0.0.0.0:2888:3888
