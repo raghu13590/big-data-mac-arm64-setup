@@ -6,26 +6,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Source common functions
 source "$SCRIPT_DIR/common-functions.sh"
 
-# Create the zoo.cfg file
-ZOOKEEPER_CONFIG_DIR="$SCRIPT_DIR/../service-data/zookeeper/configs"
-ZOOKEEPER_CONFIG_FILE="$ZOOKEEPER_CONFIG_DIR/zoo.cfg"
+# Define the path to the Docker Compose file
+COMPOSE_FILE="$SCRIPT_DIR/../docker-compose/docker-compose-zookeeper.yml"
 
-mkdir -p "$ZOOKEEPER_CONFIG_DIR"
+# Create directories if they do not exist
+mkdir -p "$SCRIPT_DIR/../app-data/zookeeper/1/data"
+mkdir -p "$SCRIPT_DIR/../app-data/zookeeper/2/data"
 
-cat > "$ZOOKEEPER_CONFIG_FILE" <<EOL
-tickTime=2000
-dataDir=/data
-clientPort=2181
-initLimit=5
-syncLimit=2
-
-# Enable Admin Server
-admin.enableServer=true
-admin.serverPort=8080
-
-# Whitelist four-letter word commands
-4lw.commands.whitelist=srvr,ruok,stat,conf,envi
-EOL
+# Create the myid files
+echo "1" > "$SCRIPT_DIR/../app-data/zookeeper/1/data/myid"
+echo "2" > "$SCRIPT_DIR/../app-data/zookeeper/2/data/myid"
 
 # Restart Zookeeper if it's not running
-restart_service "zookeeper" "$SCRIPT_DIR/../docker-compose/docker-compose-zookeeper.yml" "zookeeper"
+restart_service "zookeeper1" "$COMPOSE_FILE" "zookeeper1"
+restart_service "zookeeper2" "$COMPOSE_FILE" "zookeeper2"
