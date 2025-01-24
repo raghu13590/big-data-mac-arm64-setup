@@ -23,14 +23,14 @@ format_namenode() {
 # Function to initialize the metastore schema
 initialize_metastore_schema() {
     echo "Initializing metastore schema..."
-    docker-compose -f "$COMPOSE_FILE" exec metastore $HIVE_HOME/bin/schematool -dbType postgres -initSchema
+    docker-compose -f "$COMPOSE_FILE" exec metastore sh -c '$HIVE_HOME/bin/schematool -dbType postgres -initSchema'
 }
 
 # Function to drop and recreate the metastore schema
 drop_and_recreate_metastore_schema() {
     echo "Dropping and recreating metastore schema..."
-    docker-compose -f "$COMPOSE_FILE" exec metastore $HIVE_HOME/bin/schematool -dbType postgres -dropSchema
-    docker-compose -f "$COMPOSE_FILE" exec metastore $HIVE_HOME/bin/schematool -dbType postgres -initSchema
+    docker-compose -f "$COMPOSE_FILE" exec metastore sh -c 'PGPASSWORD=hive psql -U hive -d metastore -h postgres -p 5432 -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"'
+    docker-compose -f "$COMPOSE_FILE" exec metastore sh -c '$HIVE_HOME/bin/schematool -dbType postgres -initSchema'
 }
 
 # Check if NameNode needs formatting
@@ -56,14 +56,17 @@ restart_service "nodemanager1" $COMPOSE_FILE "nodemanager1"
 restart_service "nodemanager2" $COMPOSE_FILE "nodemanager2"
 
 # Start Hive
+restart_service "postgres" $COMPOSE_FILE "postgres"
+restart_service "metastore" $COMPOSE_FILE "metastore"
+
 # Check if PostgreSQL data directory is empty
-if [ ! "$(ls -A $SCRIPT_DIR/../app-data/postgres)" ]; then
+if [ "$(docker-compose -f "$COMPOSE_FILE" exec -T postgres bash -c 'ls -A /var/lib/postgresql/data | wc -l')" -eq 0 ]; then
     initialize_metastore_schema
 else
     drop_and_recreate_metastore_schema
 fi
-restart_service "postgres" $COMPOSE_FILE "postgres"
-restart_service "metastore" $COMPOSE_FILE "metastore"
+
+restart_service "hiveserver2" $COMPOSE_FILE "hiveserver2"
 
 echo "All services are up and running!"
 

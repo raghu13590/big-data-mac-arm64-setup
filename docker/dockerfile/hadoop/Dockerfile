@@ -1,6 +1,6 @@
 # Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.
 
-FROM ubuntu:focal
+FROM ubuntu:focal AS builder
 
 # Use bash shell for all RUN commands with pipefail option
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -12,12 +12,8 @@ ENV TZ=UTC
 # Disable suggests/recommends to reduce image size and ensure non-interactive installation
 RUN echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/10disableextras && \
     echo 'APT::Install-Suggests "0";' >> /etc/apt/apt.conf.d/10disableextras && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-# Set working directory to /root for initial setup
-WORKDIR /root
-
-RUN apt-get update && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
+    apt-get update && \
     apt-get install -y --no-install-recommends \
         wget gnupg software-properties-common lsb-release python3 git maven \
         openjdk-11-jdk curl ca-certificates autoconf automake libtool \
@@ -25,7 +21,8 @@ RUN apt-get update && \
         libxml2-dev libxslt1-dev locales libsnappy-dev libbz2-dev liblzo2-2 \
         liblzo2-dev libzstd-dev libunwind-dev libkrb5-dev libpam0g-dev gcc g++ \
         make pkg-config libtirpc-dev libsasl2-dev libgsasl7-dev protobuf-compiler \
-        libprotobuf-dev pmdk-tools libpmem-dev cmake nasm netcat net-tools less nano && \
+        libprotobuf-dev pmdk-tools libpmem-dev cmake nasm netcat net-tools less nano \
+        postgresql-client && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -75,7 +72,7 @@ RUN wget https://downloads.apache.org/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_
 # Set environment variables
 ENV HADOOP_HOME=/opt/hadoop-$HADOOP_VERSION
 ENV HIVE_HOME=/opt/hive-$HIVE_VERSION
-ENV PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$HIVE_HOME/bin
+ENV PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$HIVE_HOME/bin:/usr/bin
 
 # Create non-root users and configure permissions
 RUN useradd -ms /bin/bash hadoop && \
