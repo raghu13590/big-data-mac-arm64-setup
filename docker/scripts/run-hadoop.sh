@@ -14,28 +14,23 @@ DOCKERFILE_DIR="$SCRIPT_DIR/../dockerfile/hadoop"
 echo "Building Hadoop image..."
 docker build -t hadoop:3.3.6 "$DOCKERFILE_DIR"
 
-# Function to format the NameNode
-format_namenode() {
-    echo "Formatting NameNode..."
-    docker-compose -f "$COMPOSE_FILE" run --rm namenode hdfs namenode -format
+# Function to reset the metastore schema
+reset_metastore_schema() {
+    echo "Resetting metastore schema..."
+    if [ "$(docker-compose -f "$COMPOSE_FILE" exec -T postgres bash -c 'ls -A /var/lib/postgresql/data | wc -l')" -eq 0 ]; then
+        echo "Initializing metastore schema..."
+        docker-compose -f "$COMPOSE_FILE" exec metastore sh -c '$HIVE_HOME/bin/schematool -dbType postgres -initSchema'
+    else
+        echo "Dropping and recreating metastore schema..."
+        docker-compose -f "$COMPOSE_FILE" exec metastore sh -c 'PGPASSWORD=hive psql -U hive -d metastore -h postgres -p 5432 -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"'
+        docker-compose -f "$COMPOSE_FILE" exec metastore sh -c '$HIVE_HOME/bin/schematool -dbType postgres -initSchema'
+    fi
 }
 
-# Function to initialize the metastore schema
-initialize_metastore_schema() {
-    echo "Initializing metastore schema..."
-    docker-compose -f "$COMPOSE_FILE" exec metastore sh -c '$HIVE_HOME/bin/schematool -dbType postgres -initSchema'
-}
-
-# Function to drop and recreate the metastore schema
-drop_and_recreate_metastore_schema() {
-    echo "Dropping and recreating metastore schema..."
-    docker-compose -f "$COMPOSE_FILE" exec metastore sh -c 'PGPASSWORD=hive psql -U hive -d metastore -h postgres -p 5432 -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"'
-    docker-compose -f "$COMPOSE_FILE" exec metastore sh -c '$HIVE_HOME/bin/schematool -dbType postgres -initSchema'
-}
-
-# Check if NameNode needs formatting
+# Format the NameNode if it has not been formatted
 if [ ! -f "$SCRIPT_DIR/../app-data/hadoop/namenode/current/VERSION" ]; then
-    format_namenode
+    echo "Formatting NameNode..."
+        docker-compose -f "$COMPOSE_FILE" run --rm namenode hdfs namenode -format
 fi
 
 # Start the Hadoop services in order
@@ -58,14 +53,7 @@ restart_service "nodemanager2" $COMPOSE_FILE "nodemanager2"
 # Start Hive
 restart_service "postgres" $COMPOSE_FILE "postgres"
 restart_service "metastore" $COMPOSE_FILE "metastore"
-
-# Check if PostgreSQL data directory is empty
-if [ "$(docker-compose -f "$COMPOSE_FILE" exec -T postgres bash -c 'ls -A /var/lib/postgresql/data | wc -l')" -eq 0 ]; then
-    initialize_metastore_schema
-else
-    drop_and_recreate_metastore_schema
-fi
-
+reset_metastore_schema
 restart_service "hiveserver2" $COMPOSE_FILE "hiveserver2"
 
 echo "All services are up and running!"
