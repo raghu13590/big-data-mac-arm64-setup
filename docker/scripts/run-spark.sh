@@ -24,9 +24,6 @@ docker build -t spark-local --build-arg SPARK_VERSION=3.4.3 "$DOCKERFILE_DIR"
 # Restart Zookeeper if it's not running
 "$SCRIPT_DIR/run-zookeeper.sh"
 
-# Verify if Zookeeper is running
-verify_service "zookeeper"
-
 # Restart Spark services if they are not running
 restart_service "spark-master" "$COMPOSE_FILE" "spark-master"
 restart_service "spark-history" "$COMPOSE_FILE" "spark-history"
