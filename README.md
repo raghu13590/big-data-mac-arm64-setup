@@ -40,7 +40,7 @@ chmod +x docker/scripts/*.sh
 ./docker/scripts/run-zookeeper.sh
 ```
 This script will start the Zookeeper service with two instances and ensures they are running and healthy.
-Once Zookeeper is running, you can access the Zookeeper Admin UI for managing and monitoring at http://localhost:2280/commands and http://localhost:2281/commands. 
+Once Zookeeper is running, you can access the Zookeeper Admin UI for managing and monitoring at  http://localhost:8081/commands, http://localhost:8082/commands and http://localhost:8083/commands. 
 Use the available links to navigate to different commands like monitor, stat, conf, etc.
 
 ### 3.2. To start Kafka, run:
@@ -87,7 +87,7 @@ Open ZooNavigator in your browser at http://localhost:9001.
 ./docker/scripts/run-spark.sh
 ```
 This script will start the Spark master and worker services and ensure they are running and healthy.
-Once the services are up and running, you can access the Spark Master UI at http://localhost:8082 and the Spark Worker UI at http://localhost:8083.
+Once the services are up and running, you can access the Spark Master UI at http://localhost:8072 and the Spark Worker UI at http://localhost:8073.
 Place your Spark job JAR files in the `docker/app-data/spark/local-jars` folder. Optionally you can place data files in the `docker/app-data/spark/datasets` folder and modify the Spark job accordingly to read the data files from the datasets folder.
 To run a Spark job, use the following command:
 ```sh
