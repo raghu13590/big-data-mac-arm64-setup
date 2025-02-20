@@ -6,6 +6,7 @@ services:
       - "7077:7077"
       - "8072:8072"
       - "5005:5005"
+      - "4040:4040"
     environment:
       - SPARK_MASTER_HOST=spark-master
       - SPARK_PUBLIC_DNS=localhost
@@ -36,8 +37,8 @@ services:
     container_name: spark-worker-1
     environment:
       - SPARK_WORKER_WEBUI_PORT=8073
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=4
       - SPARK_PUBLIC_DNS=localhost
       - HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
       - ENABLE_DEBUG=true
@@ -70,8 +71,8 @@ services:
     container_name: spark-worker-2
     environment:
       - SPARK_WORKER_WEBUI_PORT=8074
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=4
       - SPARK_PUBLIC_DNS=localhost
       - HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
       - ENABLE_DEBUG=true
