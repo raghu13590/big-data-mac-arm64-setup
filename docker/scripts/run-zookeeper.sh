@@ -28,13 +28,28 @@ for i in {1..3}; do
   fi
 done
 
-# Restart Zookeeper cluster in simultaneous mode
-echo -e "\nStarting Zookeeper cluster..."
-docker-compose -f "$COMPOSE_FILE" up -d zookeeper1 zookeeper2 zookeeper3
+# Function to check if a Zookeeper instance is running
+is_zookeeper_running() {
+  local container_name=$1
+  if docker ps --filter "name=$container_name" --filter "status=running" | grep -q "$container_name"; then
+    return 0
+  else
+    return 1
+  fi
+}
 
-# Wait for the cluster to stabilize
-echo -e "\nWaiting for Zookeeper cluster to stabilize..."
-sleep 20
+# Check if Zookeeper instances are already running
+if is_zookeeper_running "zookeeper1" && is_zookeeper_running "zookeeper2" && is_zookeeper_running "zookeeper3"; then
+  echo "Zookeeper instances are already running."
+else
+  # Restart Zookeeper cluster in simultaneous mode
+  echo -e "\nStarting Zookeeper cluster..."
+  docker-compose -f "$COMPOSE_FILE" up -d zookeeper1 zookeeper2 zookeeper3
+
+  # Wait for the cluster to stabilize
+  echo -e "\nWaiting for Zookeeper cluster to stabilize..."
+  sleep 20
+fi
 
 # Function to validate Zookeeper instance
 validate_zookeeper_instance() {
