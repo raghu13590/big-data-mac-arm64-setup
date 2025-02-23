@@ -10,11 +10,14 @@ from datetime import datetime, timedelta
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Get data directory from environment variable, default to /app/data if not set
-DATA_DIR = os.getenv('DATA_DIR', '/app/data')
-MESSAGES_DIR = os.path.join(DATA_DIR, 'messages')
+DATA_DIR = os.getenv('DATA_DIR', '/app/data/messages')
 
-# Ensure the messages directory exists
-os.makedirs(MESSAGES_DIR, exist_ok=True)
+# Define topics, create directories with topic names in /app/data/messages and add messages in those directories
+TOPICS = ['topic_1', 'topic_2']  # Add more topics as needed
+
+# Ensure the topic directories exist
+for topic in TOPICS:
+    os.makedirs(os.path.join(DATA_DIR, topic), exist_ok=True)
 
 # Kafka producer setup
 producer = KafkaProducer(
@@ -22,14 +25,11 @@ producer = KafkaProducer(
     value_serializer=lambda v: v.encode('utf-8')
 )
 
-# Kafka topic to send messages to
-topic = 'your-topic-name'
-
 # Variables for message counting
 message_count = 0
 last_log_time = datetime.now().replace(second=0, microsecond=0)
 
-def process_and_send_messages(file_content):
+def process_and_send_messages(file_content, topic):
     global message_count
     # Split the content into separate messages
     messages = re.split(r'<message>(.*?)</message>', file_content, flags=re.DOTALL)
@@ -40,7 +40,7 @@ def process_and_send_messages(file_content):
             processed_message = replaceTags(message.strip())
             producer.send(topic, value=processed_message)
             message_count += 1
-            logging.debug(f'Sent message: {processed_message[:50]}...')  # Log first 50 chars
+            logging.debug(f'Sent message to {topic}: {processed_message[:50]}...')  # Log first 50 chars
 
 # replaces tags in the message with the appropriate values
 def replaceTags(message):
@@ -53,10 +53,10 @@ def replaceTags(message):
     return message
 
 # Read messages from a file and send them to Kafka
-def send_messages_from_file(file_path):
+def send_messages_from_file(file_path, topic):
     with open(file_path, 'r') as file:
         file_content = file.read()
-        process_and_send_messages(file_content)
+        process_and_send_messages(file_content, topic)
 
 def log_message_count():
     global message_count, last_log_time
@@ -69,15 +69,17 @@ def log_message_count():
 # Main loop to continuously check for new files and send messages
 try:
     while True:
-        # Get list of .txt files in the messages directory
-        txt_files = [f for f in os.listdir(MESSAGES_DIR) if f.endswith('.txt')]
+        for topic in TOPICS:
+            folder_path = os.path.join(DATA_DIR, topic)
+            # Get list of .txt files in the topic directory
+            txt_files = [f for f in os.listdir(folder_path) if f.endswith('.txt')]
 
-        if txt_files:
-            for filename in txt_files:
-                file_path = os.path.join(MESSAGES_DIR, filename)
-                send_messages_from_file(file_path)
-        else:
-            logging.debug("No .txt files found in the messages directory. Waiting...")
+            if txt_files:
+                for filename in txt_files:
+                    file_path = os.path.join(folder_path, filename)
+                    send_messages_from_file(file_path, topic)
+            else:
+                logging.debug(f"No .txt files found in the {topic} directory. Waiting...")
 
         # Log message count every minute
         log_message_count()
