@@ -4,8 +4,8 @@
 FROM ubuntu:focal
 
 # Set the Spark version as an argument
-ARG SPARK_VERSION=3.4.3
-ARG HADOOP_VERSION=3
+ARG SPARK_VERSION=3.2.1
+ARG HADOOP_VERSION=3.2
 
 # Prevent apt-get from prompting for timezone configuration
 ENV DEBIAN_FRONTEND=noninteractive
