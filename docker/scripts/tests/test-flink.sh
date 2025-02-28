@@ -7,6 +7,18 @@ execute_in_container() {
     docker exec -i "$container_name" bash -c "$command"
 }
 
+# Function to check if Yarn is running
+check_yarn_running() {
+    local output
+    output=$(execute_in_container flink-jobmanager "curl -sf http://resourcemanager:8088/ws/v1/cluster/info")
+    if echo "$output" | grep -q "ResourceManager"; then
+        return 0
+    else
+        echo "Yarn ResourceManager is not running."
+        return 1
+    fi
+}
+
 # Function to test Flink JobManager in different modes
 test_jobmanager() {
     local mode="$1"
@@ -53,6 +65,12 @@ jobmanager_yarn_client_test_status="not run"
 jobmanager_yarn_cluster_test_status="not run"
 taskmanager_test_status="not run"
 
+# Check if Yarn is running
+yarn_running=false
+if check_yarn_running; then
+    yarn_running=true
+fi
+
 # Run JobManager tests in different modes
 echo ""
 echo "Running tests..."
@@ -62,16 +80,20 @@ else
     jobmanager_local_test_status="failed"
 fi
 
-if test_jobmanager "yarn-client"; then
-    jobmanager_yarn_client_test_status="passed"
-else
-    jobmanager_yarn_client_test_status="failed"
-fi
+if [ "$yarn_running" = true ]; then
+    if test_jobmanager "yarn-client"; then
+        jobmanager_yarn_client_test_status="passed"
+    else
+        jobmanager_yarn_client_test_status="failed"
+    fi
 
-if test_jobmanager "yarn-cluster"; then
-    jobmanager_yarn_cluster_test_status="passed"
+    if test_jobmanager "yarn-cluster"; then
+        jobmanager_yarn_cluster_test_status="passed"
+    else
+        jobmanager_yarn_cluster_test_status="failed"
+    fi
 else
-    jobmanager_yarn_cluster_test_status="failed"
+    echo "Skipping Yarn tests as Yarn is not running."
 fi
 
 # Run TaskManager test
