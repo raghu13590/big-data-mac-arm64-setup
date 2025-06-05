@@ -1,8 +1,8 @@
 blob.server.port: 6124
 rest.port: 8074
-taskmanager.log.path: /opt/flink/log
+taskmanager.log.path: /opt/flink/log/taskmanager.log
 taskmanager.memory.process.size: 1568m
-jobmanager.web.log.path: /opt/flink/log
+jobmanager.web.log.path: /opt/flink/log/jobmanager.log
 jobmanager.rpc.address: jobmanager
 taskmanager.numberOfTaskSlots: 8
 yarn.containers.vcores: 8
