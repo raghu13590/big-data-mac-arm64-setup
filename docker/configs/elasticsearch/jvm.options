@@ -1,0 +1,19 @@
+# Removed deprecated CMS GC options
+#-XX:+UseConcMarkSweepGC
+#-XX:CMSInitiatingOccupancyFraction=75
+#-XX:+UseCMSInitiatingOccupancyOnly
+
+-Djava.awt.headless=true
+-Dfile.encoding=UTF-8
+-Djna.nosys=true
+
+-XX:+HeapDumpOnOutOfMemoryError
+
+-Dlog4j2.disable.jmx=true
+
+-Djava.io.tmpdir=${ES_TMPDIR}
+
+-XX:ErrorFile=/usr/share/elasticsearch/logs/hs_err_pid%p.log
+
+8:-XX:+UseNUMA
+8:-XX:+UseCondCardMark

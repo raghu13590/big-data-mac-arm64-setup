@@ -1,0 +1,22 @@
+cluster.name: ${cluster.name}
+node.name: ${node.name}
+network.host: 0.0.0.0
+
+xpack.ml.enabled: false
+
+discovery:
+  zen:
+    minimum_master_nodes: 2
+    ping.unicast.hosts: ${discovery.seed_hosts}
+
+path:
+  data: /usr/share/elasticsearch/data
+  logs: /usr/share/elasticsearch/logs
+
+bootstrap:
+  memory_lock: ${bootstrap.memory_lock}
+
+http:
+  cors:
+    enabled: true
+    allow-origin: "*"

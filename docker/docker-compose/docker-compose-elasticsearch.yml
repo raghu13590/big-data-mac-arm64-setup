@@ -1,0 +1,91 @@
+services:
+  es01:
+    image: elasticsearch-local
+    container_name: es01
+    environment:
+      - cluster.name=elasticsearch-cluster
+      - node.name=es01
+      - node.master=true
+      - node.data=true
+      - discovery.seed_hosts=es01,es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - ES_PATH_CONF=/usr/share/elasticsearch/config
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ../configs/elasticsearch:/usr/share/elasticsearch/config
+      - ../app-data/elasticsearch/node01:/usr/share/elasticsearch/data
+      - ../app-data/elasticsearch/logs:/usr/share/elasticsearch/logs
+    ports:
+      - 9200:9200
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - big-data-network
+
+  es02:
+    image: elasticsearch-local
+    container_name: es02
+    environment:
+      - cluster.name=elasticsearch-cluster
+      - node.name=es02
+      - node.master=true
+      - node.data=true
+      - discovery.seed_hosts=es01,es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - ES_PATH_CONF=/usr/share/elasticsearch/config
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ../configs/elasticsearch:/usr/share/elasticsearch/config
+      - ../app-data/elasticsearch/node02:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - big-data-network
+
+  es03:
+    image: elasticsearch-local
+    container_name: es03
+    environment:
+      - cluster.name=elasticsearch-cluster
+      - node.name=es03
+      - node.master=true
+      - node.data=true
+      - discovery.seed_hosts=es01,es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - ES_PATH_CONF=/usr/share/elasticsearch/config
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ../configs/elasticsearch:/usr/share/elasticsearch/config
+      - ../app-data/elasticsearch/node03:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - big-data-network
+
+networks:
+  big-data-network:
+    external: true
