@@ -39,8 +39,8 @@ chmod +x docker/scripts/*.sh
 ```sh
 ./docker/scripts/run-zookeeper.sh
 ```
-This script will start the Zookeeper service and ensure it is running and healthy.
-Once Zookeeper is running, you can access the Zookeeper Admin UI for managing and monitoring at http://localhost:8080/commands. 
+This script will start the Zookeeper service with two instances and ensures they are running and healthy.
+Once Zookeeper is running, you can access the Zookeeper Admin UI for managing and monitoring at  http://localhost:8081/commands, http://localhost:8082/commands and http://localhost:8083/commands. 
 Use the available links to navigate to different commands like monitor, stat, conf, etc.
 
 ### 3.2. To start Kafka, run:
@@ -76,15 +76,18 @@ Once the services are up and running, you can access Apache Superset at http://l
 ```
 This script will start the ZooNavigator service and ensure it is running and healthy.
 Open ZooNavigator in your browser at http://localhost:9001.
-    •	Enter the Zookeeper connection string as zookeeper:2181.
-    •	Save and connect.
+    •	Enter Zookeeper connection string as zookeeper1:2181 and click connect, you will be connected to zookeeper1 cluster.
+    •	You can now view the Zookeeper1 tree and manage nodes. 
+    •	click disconnect on top-right to disconnect from the zookeeper1 cluster.
+    •	Enter Zookeeper connection string as zookeeper2:2181 and click connect, you will be connected to zookeeper2 cluster.
+    •	You can now view the Zookeeper2 tree and manage nodes.
 
 ### 3.7. To start Spark, run:
 ```sh
 ./docker/scripts/run-spark.sh
 ```
 This script will start the Spark master and worker services and ensure they are running and healthy.
-Once the services are up and running, you can access the Spark Master UI at http://localhost:8082 and the Spark Worker UI at http://localhost:8083.
+Once the services are up and running, you can access the Spark Master UI at http://localhost:8072 and the Spark Worker UI at http://localhost:8073.
 Place your Spark job JAR files in the `docker/app-data/spark/local-jars` folder. Optionally you can place data files in the `docker/app-data/spark/datasets` folder and modify the Spark job accordingly to read the data files from the datasets folder.
 To run a Spark job, use the following command:
 ```sh

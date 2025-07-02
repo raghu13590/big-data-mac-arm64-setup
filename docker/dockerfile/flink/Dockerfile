@@ -40,10 +40,12 @@ RUN groupadd hadoop && \
     mkdir -p /tmp/flink-yarn-tmp && \
     mkdir -p /opt/hadoop-3.3.6/logs && \
     mkdir -p /opt/flink/conf && \
+    mkdir -p /opt/flink/log && \
     mkdir -p /tmp/flink && \
     chmod -R 777 /tmp/flink-yarn-tmp && \
     chmod -R 777 /opt/hadoop-3.3.6/logs && \
     chmod -R 777 /opt/flink/conf && \
+    chmod -R 777 /opt/flink/log && \
     chmod -R 777 /tmp/flink && \
     chown -R hadoop:hadoop /opt/flink && \
     chown -R hadoop:hadoop /opt/hadoop-3.3.6 && \

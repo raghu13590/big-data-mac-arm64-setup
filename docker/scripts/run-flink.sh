@@ -23,9 +23,6 @@ docker build -t flink-local "$DOCKERFILE_DIR"
 # Restart Zookeeper if it's not running
 "$SCRIPT_DIR/run-zookeeper.sh"
 
-# Verify if Zookeeper is running
-verify_service "zookeeper"
-
 # Restart Flink Job Manager service if it's not running
 restart_service "jobmanager" "$COMPOSE_FILE" "flink-jobmanager"
 

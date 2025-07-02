@@ -5,11 +5,11 @@ services:
     ports:
       - "9001:9000"  # Expose port 9000 on container as 9001 on the host
     environment:
-      ZOOKEEPER_SERVERS: zookeeper:2181  # Connect ZooNavigator to Zookeeper
+      ZOOKEEPER_SERVERS: zookeeper1:2181,zookeeper2:2181 # Connect ZooNavigator to Zookeeper instances
       DISABLE_AUTH: "true"  # Disable authentication for ZooNavigator (use cautiously)
     volumes:
-      - ../service-data/zoonavigator/configs:/app/configs  # Mount the configs directory
-      - ../service-data/zoonavigator/volumes:/app/volumes  # Mount the volumes directory
+      - ../app-data/zoonavigator/configs:/app/configs  # Mount the configs directory
+      - ../app-data/zoonavigator/volumes:/app/volumes  # Mount the volumes directory
     networks:
       - big-data-network  # Connect to the big-data network
     healthcheck:

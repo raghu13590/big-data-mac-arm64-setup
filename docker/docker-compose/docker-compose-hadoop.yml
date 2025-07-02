@@ -9,13 +9,11 @@ services:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../app-data/hadoop/namenode:/hadoop/dfs/name
       - ../app-data/hadoop/datasets:/datasets
-    environment:
-      - HADOOP_HOME=/opt/hadoop-3.3.6
     command: namenode
     networks:
       - big-data-network
     healthcheck:
-      test: [ "CMD", "bash", "-c", "nc -zv namenode 9000" ]
+      test: ["CMD", "bash", "-c", "nc -zv namenode 9000"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -24,17 +22,17 @@ services:
     image: hadoop:3.3.6
     container_name: datanode1
     hostname: datanode1
+    depends_on:
+      - namenode
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../app-data/hadoop/datanode1:/hadoop/dfs/data
       - ../app-data/hadoop/datasets:/datasets
-    environment:
-      - HADOOP_HOME=/opt/hadoop-3.3.6
     command: datanode
     networks:
       - big-data-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9864" ]
+      test: ["CMD", "curl", "-f", "http://localhost:9864"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -43,17 +41,17 @@ services:
     image: hadoop:3.3.6
     container_name: datanode2
     hostname: datanode2
+    depends_on:
+      - namenode
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../app-data/hadoop/datanode2:/hadoop/dfs/data
       - ../app-data/hadoop/datasets:/datasets
-    environment:
-      - HADOOP_HOME=/opt/hadoop-3.3.6
     command: datanode
     networks:
       - big-data-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9864" ]
+      test: ["CMD", "curl", "-f", "http://localhost:9864"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -62,17 +60,17 @@ services:
     image: hadoop:3.3.6
     container_name: resourcemanager
     hostname: resourcemanager
+    depends_on:
+      - namenode
     ports:
       - "8088:8088"
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-    environment:
-      - HADOOP_HOME=/opt/hadoop-3.3.6
     command: resourcemanager
     networks:
       - big-data-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://resourcemanager:8088/isActive" ]
+      test: ["CMD", "curl", "-f", "http://resourcemanager:8088/isActive"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -81,17 +79,17 @@ services:
     image: hadoop:3.3.6
     container_name: nodemanager1
     hostname: nodemanager1
+    depends_on:
+      - resourcemanager
     ports:
       - "8042:8042"
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-    environment:
-      - HADOOP_HOME=/opt/hadoop-3.3.6
     command: nodemanager
     networks:
       - big-data-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8042" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8042"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -100,17 +98,17 @@ services:
     image: hadoop:3.3.6
     container_name: nodemanager2
     hostname: nodemanager2
+    depends_on:
+      - resourcemanager
     ports:
       - "8043:8042"
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-    environment:
-      - HADOOP_HOME=/opt/hadoop-3.3.6
     command: nodemanager
     networks:
       - big-data-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8042" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8042"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -124,11 +122,11 @@ services:
       POSTGRES_USER: hive
       POSTGRES_PASSWORD: hive
     volumes:
-      - ../app-data/postgres:/var/lib/postgresql/data
+      - ../app-data/hadoop/postgres:/var/lib/postgresql/data
     networks:
       - big-data-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U hive -d metastore" ]
+      test: ["CMD-SHELL", "pg_isready -U hive -d metastore"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -142,15 +140,12 @@ services:
     volumes:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../configs/hadoop/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
-      - ../app-data/metastore:/opt/hive-4.0.1/metastore_db
-    environment:
-      - HADOOP_HOME=/opt/hadoop-3.3.6
-      - HIVE_HOME=/opt/hive-4.0.1
+      - ../app-data/hadoop/metastore:/opt/hive-4.0.1/metastore_db
     command: metastore
     networks:
       - big-data-network
     healthcheck:
-      test: [ "CMD", "bash", "-c", "nc -zv localhost 9083" ]
+      test: ["CMD", "bash", "-c", "nc -zv localhost 9083"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -165,16 +160,13 @@ services:
       - ../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
       - ../configs/hadoop/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
       - ../app-data/hadoop/datasets:/datasets
-    environment:
-      - HADOOP_HOME=/opt/hadoop-3.3.6
-      - HIVE_HOME=/opt/hive-4.0.1
     ports:
       - "10000:10000"
     command: hiveserver2
     networks:
       - big-data-network
     healthcheck:
-      test: [ "CMD", "bash", "-c", "nc -zv localhost 10000" ]
+      test: ["CMD", "bash", "-c", "nc -zv localhost 10000"]
       interval: 30s
       timeout: 10s
       retries: 3

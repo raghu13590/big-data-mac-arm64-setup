@@ -1,5 +1,26 @@
 #!/bin/bash
 
+# This script is used to set up and run a Hadoop cluster using Docker Compose.
+# It builds the Hadoop Docker image, formats the NameNode if necessary, and starts
+# the Hadoop services in the correct order. Additionally, it can perform a clean
+# install if the "--reset" parameter is provided.
+
+# Usage:
+# ./run-hadoop.sh [--reset]
+# - If "--reset" is provided as an argument, the script will perform a clean install.
+# - If no argument is provided, the script will start the Hadoop services without
+#   resetting the environment.
+
+# Check for the reset parameter
+RESET_PARAM=""
+if [ "$1" == "--reset" ]; then
+    RESET_PARAM="reset"
+elif [ -n "$1" ]; then
+    echo "Error: Unrecognized parameter '$1'"
+    echo "Usage: $0 [--reset]"
+    exit 1
+fi
+
 # Get the directory of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -7,78 +28,91 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common-functions.sh"
 
 # Define the path to the Docker Compose file
-COMPOSE_FILE="$SCRIPT_DIR/../docker-compose/docker-compose-hadoop.yml"
+HADOOP_COMPOSE_FILE="$SCRIPT_DIR/../docker-compose/docker-compose-hadoop.yml"
 DOCKERFILE_DIR="$SCRIPT_DIR/../dockerfile/hadoop"
-
-# Check if Docker is running
-check_docker_running
-
-# Validate the Docker Compose file
-validate_compose_file "$COMPOSE_FILE"
+ZOOKEEPER_HADOOP_COMPOSE_FILE="$SCRIPT_DIR/../docker-compose/docker-compose-zookeeper.yml"
+APP_DATA_DIR="$SCRIPT_DIR/../app-data"
 
 # Build the Hadoop image
 echo "Building Hadoop image..."
 docker build -t hadoop:3.3.6 "$DOCKERFILE_DIR"
 
-# Function to format the NameNode
-format_namenode() {
+# Function to reset the metastore schema
+reset_metastore_schema() {
+    local reset=$1
+    echo "Resetting metastore schema..."
+    if [ "$(docker-compose -f "$HADOOP_COMPOSE_FILE" exec -T postgres bash -c 'ls -A /var/lib/postgresql/data | wc -l')" -eq 0 ]; then
+        echo "Initializing metastore schema..."
+        docker-compose -f "$HADOOP_COMPOSE_FILE" exec metastore sh -c '$HIVE_HOME/bin/schematool -dbType postgres -initSchema'
+    elif [ "$reset" == "reset" ]; then
+        echo "Dropping and recreating metastore schema..."
+        docker-compose -f "$HADOOP_COMPOSE_FILE" exec metastore sh -c 'PGPASSWORD=hive psql -U hive -d metastore -h postgres -p 5432 -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"'
+        docker-compose -f "$HADOOP_COMPOSE_FILE" exec metastore sh -c '$HIVE_HOME/bin/schematool -dbType postgres -initSchema'
+    else
+        echo "Metastore schema already exists. Skipping initialization."
+    fi
+}
+
+# Function to perform clean install
+perform_clean_install() {
+    echo "Performing absolute clean install..."
+
+    # Stop all containers and remove volumes
+    echo "Stopping all containers and removing volumes..."
+    docker-compose -f "$HADOOP_COMPOSE_FILE" down -v
+
+    SERVICES=$(docker-compose -f "$HADOOP_COMPOSE_FILE" config --services)
+    # Clear all service-related data
+    for service in "${SERVICES[@]}"; do
+        echo "Clearing $service data..."
+        find "$APP_DATA_DIR/$service" -mindepth 1 -delete
+    done
+
+    # Format NameNode
     echo "Formatting NameNode..."
-    docker-compose -f "$COMPOSE_FILE" run --rm namenode hdfs namenode -format
+    docker-compose -f "$HADOOP_COMPOSE_FILE" run --rm namenode hdfs namenode -format -force
+
+    echo "Absolute clean install completed."
 }
 
-# Function to initialize the metastore schema
-initialize_metastore_schema() {
-    echo "Initializing metastore schema..."
-    docker-compose -f "$COMPOSE_FILE" exec metastore $HIVE_HOME/bin/schematool -dbType postgres -initSchema
-}
+# Start Zookeeper
+"$SCRIPT_DIR/run-zookeeper.sh"
 
-# Function to drop and recreate the metastore schema
-drop_and_recreate_metastore_schema() {
-    echo "Dropping and recreating metastore schema..."
-    docker-compose -f "$COMPOSE_FILE" exec metastore $HIVE_HOME/bin/schematool -dbType postgres -dropSchema
-    docker-compose -f "$COMPOSE_FILE" exec metastore $HIVE_HOME/bin/schematool -dbType postgres -initSchema
-}
-
-# Function to start and verify a service
-start_and_verify_service() {
-    local service_name="$1"
-    echo "Starting $service_name..."
-    docker-compose -f "$COMPOSE_FILE" up -d "$service_name"
-    verify_service "$service_name"
-}
-
-# Check if NameNode needs formatting
-if [ ! -f "$SCRIPT_DIR/../app-data/hadoop/namenode/current/VERSION" ]; then
-    format_namenode
+# Perform clean install if reset parameter is provided
+if [ "$RESET_PARAM" == "reset" ]; then
+    perform_clean_install
 fi
 
 # Start the Hadoop services in order
 echo "Starting Hadoop services..."
 
 # Start NameNode
-start_and_verify_service "namenode"
+restart_service "namenode" $HADOOP_COMPOSE_FILE "namenode"
+
+# Reset Hive warehouse directory
+if [ "$RESET_PARAM" == "reset" ]; then
+    echo "Resetting Hive warehouse directory..."
+    docker-compose -f "$HADOOP_COMPOSE_FILE" exec namenode hdfs dfs -rm -r /user/hive/warehouse
+    docker-compose -f "$HADOOP_COMPOSE_FILE" exec namenode hdfs dfs -mkdir -p /user/hive/warehouse
+    docker-compose -f "$HADOOP_COMPOSE_FILE" exec namenode hdfs dfs -chmod g+w /user/hive/warehouse
+fi
 
 # Start DataNodes
-start_and_verify_service "datanode1"
-start_and_verify_service "datanode2"
+restart_service "datanode1" $HADOOP_COMPOSE_FILE "datanode1"
+restart_service "datanode2" $HADOOP_COMPOSE_FILE "datanode2"
 
 # Start ResourceManager
-start_and_verify_service "resourcemanager"
+restart_service "resourcemanager" $HADOOP_COMPOSE_FILE "resourcemanager"
 
 # Start NodeManagers
-start_and_verify_service "nodemanager1"
-start_and_verify_service "nodemanager2"
+restart_service "nodemanager1" $HADOOP_COMPOSE_FILE "nodemanager1"
+restart_service "nodemanager2" $HADOOP_COMPOSE_FILE "nodemanager2"
 
 # Start Hive
-# Check if PostgreSQL data directory is empty
-if [ ! "$(ls -A $SCRIPT_DIR/../app-data/postgres)" ]; then
-    initialize_metastore_schema
-else
-    drop_and_recreate_metastore_schema
-fi
-start_and_verify_service "postgres"
-start_and_verify_service "metastore"
-start_and_verify_service "hiveserver2"
+restart_service "postgres" $HADOOP_COMPOSE_FILE "postgres"
+restart_service "metastore" $HADOOP_COMPOSE_FILE "metastore"
+reset_metastore_schema $RESET_PARAM
+restart_service "hiveserver2" $HADOOP_COMPOSE_FILE "hiveserver2"
 
 echo "All services are up and running!"
 

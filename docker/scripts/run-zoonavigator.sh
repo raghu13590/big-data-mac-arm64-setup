@@ -10,7 +10,8 @@ source "$SCRIPT_DIR/common-functions.sh"
 "$SCRIPT_DIR/run-zookeeper.sh"
 
 # Verify if Zookeeper is running
-verify_service "zookeeper"
+verify_service "zookeeper1"
+verify_service "zookeeper2"
 
 # Restart ZooNavigator service
 restart_service "zoonavigator" "$SCRIPT_DIR/../docker-compose/docker-compose-zoonavigator.yml" "zoonavigator"

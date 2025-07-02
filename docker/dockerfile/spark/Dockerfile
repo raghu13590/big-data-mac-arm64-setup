@@ -4,7 +4,8 @@
 FROM ubuntu:focal
 
 # Set the Spark version as an argument
-ARG SPARK_VERSION=3.4.3
+ARG SPARK_VERSION=3.2.1
+ARG HADOOP_VERSION=3.2
 
 # Prevent apt-get from prompting for timezone configuration
 ENV DEBIAN_FRONTEND=noninteractive
@@ -24,10 +25,10 @@ WORKDIR /opt/glibc-2.36
 RUN mkdir build && cd build && ../configure --disable-sanity-checks && make
 
 # Install Spark
-RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
-    tar -xzf spark-${SPARK_VERSION}-bin-hadoop3.tgz -C /opt && \
-    mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark && \
-    rm spark-${SPARK_VERSION}-bin-hadoop3.tgz
+RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz && \
+    tar -xzf spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz -C /opt && \
+    mv /opt/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} /opt/spark && \
+    rm spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz
 
 # Set environment variables
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64
