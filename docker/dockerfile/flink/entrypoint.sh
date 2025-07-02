@@ -33,5 +33,9 @@ fi
 hadoop fs -mkdir -p /flink/lib
 hadoop fs -put /opt/flink/lib/* /flink/lib/
 
+# Add to entrypoint.sh before starting Flink
+chown -R hadoop:hadoop /opt/flink/log
+chmod -R 755 /opt/flink/log
+
 # Execute the command passed to the container
 exec "$@"
