@@ -1,0 +1,126 @@
+services:
+  spark-master:
+    image: spark-local
+    container_name: spark-master
+    ports:
+      - "7077:7077"
+      - "8072:8072"
+      - "5005:5005"
+      - "4040:4040"
+    environment:
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_PUBLIC_DNS=localhost
+      - SPARK_MASTER_WEBUI_PORT=8072
+      - HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
+      - ENABLE_DEBUG=true
+    volumes:
+      - ../../configs/spark/spark-env.sh:/opt/spark/conf/spark-env.sh
+      - ../../configs/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ../../configs/hadoop/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
+      - ../../configs/hadoop/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
+      - ../../configs/hadoop/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
+      - ../../configs/hadoop/hive-site.xml:/opt/hive/hive-site.xml
+      - ../../app-data/spark/history:/opt/spark/history
+      - ../../app-data/spark/datasets:/opt/spark/datasets
+      - ../../app-data/spark/local-jars:/opt/spark/local-jars
+    networks:
+      - big-data-network
+    command: ["spark-class", "org.apache.spark.deploy.master.Master", "--webui-port", "8072"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8072"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  spark-worker-1:
+    image: spark-local
+    container_name: spark-worker-1
+    environment:
+      - SPARK_WORKER_WEBUI_PORT=8073
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=4
+      - SPARK_PUBLIC_DNS=localhost
+      - HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
+      - ENABLE_DEBUG=true
+    ports:
+      - "8073:8073"
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    volumes:
+      - ../../configs/spark/spark-env.sh:/opt/spark/conf/spark-env.sh
+      - ../../configs/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ../../configs/hadoop/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
+      - ../../configs/hadoop/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
+      - ../../configs/hadoop/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
+      - ../../configs/hadoop/hive-site.xml:/opt/hive/hive-site.xml
+      - ../../app-data/spark/history:/opt/spark/history
+      - ../../app-data/spark/datasets:/opt/spark/datasets
+      - ../../app-data/spark/local-jars:/opt/spark/local-jars
+    networks:
+      - big-data-network
+    command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "8073"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8073"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  spark-worker-2:
+    image: spark-local
+    container_name: spark-worker-2
+    environment:
+      - SPARK_WORKER_WEBUI_PORT=8074
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=4
+      - SPARK_PUBLIC_DNS=localhost
+      - HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
+      - ENABLE_DEBUG=true
+    ports:
+      - "8074:8074"
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    volumes:
+      - ../../configs/spark/spark-env.sh:/opt/spark/conf/spark-env.sh
+      - ../../configs/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ../../configs/hadoop/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
+      - ../../configs/hadoop/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
+      - ../../configs/hadoop/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
+      - ../../configs/hadoop/hive-site.xml:/opt/hive/hive-site.xml
+      - ../../app-data/spark/history:/opt/spark/history
+      - ../../app-data/spark/datasets:/opt/spark/datasets
+      - ../../app-data/spark/local-jars:/opt/spark/local-jars
+    networks:
+      - big-data-network
+    command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "8074"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8074"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  spark-history:
+    image: spark-local
+    container_name: spark-history
+    ports:
+      - "18080:18080"
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    volumes:
+      - ../../configs/spark/spark-env.sh:/opt/spark/conf/spark-env.sh
+      - ../../configs/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ../../app-data/spark/history:/opt/spark/history
+    networks:
+      - big-data-network
+    command: ["spark-class", "org.apache.spark.deploy.history.HistoryServer"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:18080"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  big-data-network:
+    external: true
