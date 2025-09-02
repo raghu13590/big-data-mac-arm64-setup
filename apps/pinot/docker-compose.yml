@@ -1,0 +1,171 @@
+version: '3.8'
+
+services:
+  pinot-controller:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pinot-controller
+    hostname: pinot-controller
+    ports:
+      - "9000:9000"
+    environment:
+      - PINOT_COMPONENT=controller
+      - CONTROLLER_HOST=pinot-controller
+      - CONTROLLER_PORT=9000
+      - ZK_ADDRESS=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+      - CONTROLLER_DATA_DIR=/var/pinot/controller/data
+      - CONTROLLER_VIP_HOST=pinot-controller
+      - CONTROLLER_VIP_PORT=9000
+      - PINOT_CLUSTER_NAME=PinotCluster
+    volumes:
+      - ../../app-data/pinot/controller/data:/var/pinot/controller/data
+      - ../../app-data/pinot/controller/logs:/var/pinot/controller/logs
+      - ../../configs/pinot/controller:/opt/pinot/configs
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  pinot-broker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pinot-broker
+    hostname: pinot-broker
+    ports:
+      - "8099:8099"
+    environment:
+      - PINOT_COMPONENT=broker
+      - BROKER_HOST=pinot-broker
+      - BROKER_PORT=8099
+      - ZK_ADDRESS=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+      - BROKER_QUERY_PORT=8099
+      - PINOT_CLUSTER_NAME=PinotCluster
+      - BROKER_INSTANCE_ID=Broker_pinot-broker_8099
+    volumes:
+      - ../../app-data/pinot/broker/logs:/var/pinot/broker/logs
+      - ../../configs/pinot/broker:/opt/pinot/configs
+    depends_on:
+      pinot-controller:
+        condition: service_healthy
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8099/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  pinot-server-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pinot-server-1
+    hostname: pinot-server-1
+    ports:
+      - "8098:8098"
+      - "8097:8097"  # Admin port
+    environment:
+      - PINOT_COMPONENT=server
+      - SERVER_HOST=pinot-server-1
+      - SERVER_PORT=8098
+      - SERVER_ADMIN_PORT=8097
+      - ZK_ADDRESS=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+      - SERVER_DATA_DIR=/var/pinot/server/data
+      - SERVER_SEGMENT_DIR=/var/pinot/server/data/segments
+      - PINOT_CLUSTER_NAME=PinotCluster
+      - SERVER_INSTANCE_ID=Server_pinot-server-1_8098
+    volumes:
+      - ../../app-data/pinot/server1/data:/var/pinot/server/data
+      - ../../app-data/pinot/server1/logs:/var/pinot/server/logs
+      - ../../configs/pinot/server1:/opt/pinot/configs
+    depends_on:
+      pinot-broker:
+        condition: service_healthy
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8097/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  pinot-server-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pinot-server-2
+    hostname: pinot-server-2
+    ports:
+      - "8198:8198"
+      - "8197:8097"  # Admin port
+    environment:
+      - PINOT_COMPONENT=server
+      - SERVER_HOST=pinot-server-2
+      - SERVER_PORT=8098
+      - SERVER_ADMIN_PORT=8097
+      - ZK_ADDRESS=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+      - SERVER_DATA_DIR=/var/pinot/server/data
+      - SERVER_SEGMENT_DIR=/var/pinot/server/data/segments
+      - PINOT_CLUSTER_NAME=PinotCluster
+      - SERVER_INSTANCE_ID=Server_pinot-server-2_8098
+    volumes:
+      - ../../app-data/pinot/server2/data:/var/pinot/server/data
+      - ../../app-data/pinot/server2/logs:/var/pinot/server/logs
+      - ../../configs/pinot/server2:/opt/pinot/configs
+    depends_on:
+      pinot-broker:
+        condition: service_healthy
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8097/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  pinot-minion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pinot-minion
+    hostname: pinot-minion
+    ports:
+      - "9514:9514"
+    environment:
+      - PINOT_COMPONENT=minion
+      - MINION_HOST=pinot-minion
+      - MINION_PORT=9514
+      - ZK_ADDRESS=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+      - MINION_DATA_DIR=/var/pinot/minion/data
+      - PINOT_CLUSTER_NAME=PinotCluster
+      - MINION_INSTANCE_ID=Minion_pinot-minion_9514
+    volumes:
+      - ../../app-data/pinot/minion/data:/var/pinot/minion/data
+      - ../../app-data/pinot/minion/logs:/var/pinot/minion/logs
+      - ../../configs/pinot/minion:/opt/pinot/configs
+    depends_on:
+      pinot-server-1:
+        condition: service_healthy
+      pinot-server-2:
+        condition: service_healthy
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9514/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  big-data-network:
+    external: true
