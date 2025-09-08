@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common-functions.sh"
 
 # Define the path to the Docker Compose file
-COMPOSE_FILE="$SCRIPT_DIR/../apps/zookeeper/docker-compose-zookeeper.yml"
+COMPOSE_FILE="$SCRIPT_DIR/../apps/zookeeper/docker-compose.yml"
 
 # Create directories and myid files for each Zookeeper instance
 for i in {1..3}; do

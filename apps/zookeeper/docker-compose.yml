@@ -8,11 +8,10 @@ services:
       - "2888:2888"  # Follower port for peer communication
       - "3888:3888"  # Leader election port
       - "8081:8080"  # AdminServer port for Zookeeper1
+    env_file:
+      - .env
     environment:
       - ZOO_SERVER_ID=1
-      - ZOO_SERVERS=server.1=zookeeper1:2888:3888 server.2=zookeeper2:2888:3888 server.3=zookeeper3:2888:3888
-      - ALLOW_ANONYMOUS_LOGIN=yes
-      - ZOO_4LW_COMMANDS_WHITELIST=srvr,ruok,stat,conf,envi
     volumes:
       - ../../configs/zookeeper/config/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
       - ../../app-data/zookeeper/zookeeper1/data:/data
@@ -28,11 +27,10 @@ services:
       - "2889:2888"  # Follower port for peer communication
       - "3889:3888"  # Leader election port
       - "8082:8080"  # AdminServer port for Zookeeper2
+    env_file:
+      - .env
     environment:
       - ZOO_SERVER_ID=2
-      - ZOO_SERVERS=server.1=zookeeper1:2888:3888 server.2=zookeeper2:2888:3888 server.3=zookeeper3:2888:3888
-      - ALLOW_ANONYMOUS_LOGIN=yes
-      - ZOO_4LW_COMMANDS_WHITELIST=srvr,ruok,stat,conf,envi
     volumes:
       - ../../configs/zookeeper/config/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
       - ../../app-data/zookeeper/zookeeper2/data:/data
@@ -48,11 +46,10 @@ services:
       - "2890:2888"  # Follower port for peer communication
       - "3890:3888"  # Leader election port
       - "8083:8080"  # AdminServer port for Zookeeper3
+    env_file:
+      - .env
     environment:
       - ZOO_SERVER_ID=3
-      - ZOO_SERVERS=server.1=zookeeper1:2888:3888 server.2=zookeeper2:2888:3888 server.3=zookeeper3:2888:3888
-      - ALLOW_ANONYMOUS_LOGIN=yes
-      - ZOO_4LW_COMMANDS_WHITELIST=srvr,ruok,stat,conf,envi
     volumes:
       - ../../configs/zookeeper/config/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
       - ../../app-data/zookeeper/zookeeper3/data:/data
