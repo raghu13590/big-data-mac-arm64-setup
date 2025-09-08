@@ -5,9 +5,20 @@ FROM ubuntu:focal AS builder
 # Use bash shell for all RUN commands with pipefail option
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Set non-interactive frontend and preconfigure tzdata
+# Environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
+ENV PYTHONIOENCODING=utf-8
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64
+ENV PATH=$JAVA_HOME/bin:$PATH
+ENV PINOT_HOME=/opt/pinot
+ENV PATH=$PATH:${PINOT_HOME}/bin
+ENV JVM_OPTS="-Xms1G -Xmx4G -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication"
+
+# Build arguments
+ARG PINOT_VERSION
+ENV PINOT_VERSION=${PINOT_VERSION}
 
 # Disable suggests/recommends to reduce image size
 RUN echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/10disableextras && \
@@ -26,19 +37,8 @@ RUN echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/10disableextras &&
 # Set locale
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen en_US.UTF-8
-ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
-ENV PYTHONIOENCODING=utf-8
 
-# Set Java environment
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64
-ENV PATH=$JAVA_HOME/bin:$PATH
-
-# Set Pinot version and installation directory
-ARG PINOT_VERSION
-ENV PINOT_VERSION=${PINOT_VERSION}
-ENV PINOT_HOME=/opt/pinot
-
-# Download and install Apache Pinot 1.2.0 (using binary for ARM64)
+# Download and install Apache Pinot
 RUN mkdir -p ${PINOT_HOME} && \
     cd /tmp && \
     wget -q https://archive.apache.org/dist/pinot/apache-pinot-${PINOT_VERSION}/apache-pinot-${PINOT_VERSION}-bin.tar.gz && \
@@ -46,17 +46,11 @@ RUN mkdir -p ${PINOT_HOME} && \
     mv apache-pinot-${PINOT_VERSION}-bin/* ${PINOT_HOME}/ && \
     rm -rf /tmp/apache-pinot-*
 
-# Download additional plugins and dependencies for 1.2.0
+# Download additional plugins and dependencies
 RUN cd ${PINOT_HOME}/plugins && \
-    # Download Kafka connector if needed for streaming
     wget -q https://repo1.maven.org/maven2/org/apache/pinot/pinot-kafka-2.0/${PINOT_VERSION}/pinot-kafka-2.0-${PINOT_VERSION}-shaded.jar || true && \
-    # Download S3 plugin for deep storage
     wget -q https://repo1.maven.org/maven2/org/apache/pinot/pinot-s3/${PINOT_VERSION}/pinot-s3-${PINOT_VERSION}-shaded.jar || true && \
-    # Download Avro plugin
     wget -q https://repo1.maven.org/maven2/org/apache/pinot/pinot-avro/${PINOT_VERSION}/pinot-avro-${PINOT_VERSION}-shaded.jar || true
-
-# Set environment variables
-ENV PATH=$PATH:${PINOT_HOME}/bin
 
 # Create necessary directories with proper permissions
 RUN mkdir -p /var/pinot/controller/data \
@@ -83,8 +77,5 @@ RUN chmod +x /entrypoint.sh
 # Switch to pinot user
 USER pinot
 WORKDIR /home/pinot
-
-# Set JVM options for ARM64 optimization
-ENV JVM_OPTS="-Xms1G -Xmx4G -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication"
 
 ENTRYPOINT ["/entrypoint.sh"]
