@@ -12,6 +12,7 @@ source "$SCRIPT_DIR/common-functions.sh"
 # Verify if Zookeeper is running
 verify_service "zookeeper1"
 verify_service "zookeeper2"
+verify_service "zookeeper3"
 
 # Restart ZooNavigator service
 restart_service "zoonavigator" "$SCRIPT_DIR/../apps/zoonavigator/docker-compose.yml" "zoonavigator"

@@ -1,6 +1,12 @@
 # Makefile for Apache Pinot Docker Setup with External Zookeeper
 .PHONY: help build up down restart logs clean status health init-cluster create-table load-data scale
 
+# Load environment variables from .env
+ifneq (,$(wildcard .env))
+    include .env
+    export
+endif
+
 # Variables
 COMPOSE_FILE = docker-compose.yml
 PROJECT_NAME = pinot-cluster

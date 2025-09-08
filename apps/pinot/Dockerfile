@@ -34,7 +34,8 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64
 ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Set Pinot version and installation directory
-ENV PINOT_VERSION=1.2.0
+ARG PINOT_VERSION
+ENV PINOT_VERSION=${PINOT_VERSION}
 ENV PINOT_HOME=/opt/pinot
 
 # Download and install Apache Pinot 1.2.0 (using binary for ARM64)
