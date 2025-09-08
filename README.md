@@ -75,12 +75,15 @@ Once the services are up and running, you can access Apache Superset at http://l
 ./docker/scripts/run-zoonavigator.sh
 ```
 This script will start the ZooNavigator service and ensure it is running and healthy.
-Open ZooNavigator in your browser at http://localhost:9001.
+Open ZooNavigator in your browser at http://localhost:2180.
     •	Enter Zookeeper connection string as zookeeper1:2181 and click connect, you will be connected to zookeeper1 cluster.
     •	You can now view the Zookeeper1 tree and manage nodes. 
     •	click disconnect on top-right to disconnect from the zookeeper1 cluster.
     •	Enter Zookeeper connection string as zookeeper2:2181 and click connect, you will be connected to zookeeper2 cluster.
-    •	You can now view the Zookeeper2 tree and manage nodes.
+    •	You can now view the Zookeeper2 tree and manage nodes. 
+    •	click disconnect on top-right to disconnect from the zookeeper2 cluster.
+    •	Enter Zookeeper connection string as zookeeper3:2181 and click connect, you will be connected to zookeeper3 cluster.
+    •	You can now view the Zookeeper3 tree and manage nodes.
 
 ### 3.7. To start Spark, run:
 ```sh

@@ -3,17 +3,18 @@ services:
     image: elkozmon/zoonavigator:latest
     container_name: zoonavigator
     ports:
-      - "9001:9000"  # Expose port 9000 on container as 9001 on the host
+      - "2180:2180"  # Expose port 2180 on container as 2180 on the host
     environment:
-      ZOOKEEPER_SERVERS: zookeeper1:2181,zookeeper2:2181 # Connect ZooNavigator to Zookeeper instances
+      ZOOKEEPER_SERVERS: zookeeper1:2181,zookeeper2:2181,zookeeper3:2181 # Connect ZooNavigator to Zookeeper instances
       DISABLE_AUTH: "true"  # Disable authentication for ZooNavigator (use cautiously)
+      HTTP_PORT: 2180  # Set the HTTP port for ZooNavigator
     volumes:
       - ../../app-data/zoonavigator/configs:/app/configs  # Mount the configs directory
       - ../../app-data/zoonavigator/volumes:/app/volumes  # Mount the volumes directory
     networks:
       - big-data-network  # Connect to the big-data network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000 || exit 1"]  # Health check using curl
+      test: ["CMD-SHELL", "curl -f http://localhost:2180 || exit 1"]  # Health check using curl
       interval: 30s  # Interval between health checks
       timeout: 10s  # Health check timeout
       retries: 5  # Number of retries before marking the service as unhealthy

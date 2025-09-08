@@ -14,7 +14,7 @@ verify_service "zookeeper1"
 verify_service "zookeeper2"
 
 # Restart ZooNavigator service
-restart_service "zoonavigator" "$SCRIPT_DIR/../apps/zoonavigator/docker-compose-zoonavigator.yml" "zoonavigator"
+restart_service "zoonavigator" "$SCRIPT_DIR/../apps/zoonavigator/docker-compose.yml" "zoonavigator"
 
 # Verify if ZooNavigator is running and healthy
 verify_service "zoonavigator"
