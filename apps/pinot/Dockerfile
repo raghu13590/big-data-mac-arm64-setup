@@ -72,26 +72,8 @@ RUN mkdir -p /var/pinot/controller/data \
 RUN useradd -ms /bin/bash pinot && \
     chown -R pinot:pinot /var/pinot ${PINOT_HOME}
 
-## Copy configuration files
-#COPY --chown=pinot:pinot configs/ /opt/pinot/configs/
-#COPY --chown=pinot:pinot scripts/ /opt/pinot/scripts/
-
 # Make scripts executable
 RUN chmod +x /opt/pinot/scripts/*.sh 2>/dev/null || true
-
-# Expose ports
-# Controller
-EXPOSE 9000
-# Broker
-EXPOSE 8099
-# Server
-EXPOSE 8098 8097
-# Minion
-EXPOSE 9514
-
-# Health check script
-COPY --chown=pinot:pinot healthcheck.sh /healthcheck.sh
-RUN chmod +x /healthcheck.sh
 
 # Copy entrypoint script
 COPY --chown=pinot:pinot entrypoint.sh /entrypoint.sh
@@ -104,9 +86,4 @@ WORKDIR /home/pinot
 # Set JVM options for ARM64 optimization
 ENV JVM_OPTS="-Xms1G -Xmx4G -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication"
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD /healthcheck.sh || exit 1
-
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["controller"]
