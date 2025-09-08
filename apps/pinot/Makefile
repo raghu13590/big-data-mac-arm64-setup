@@ -53,3 +53,14 @@ up-minimal: ## Start minimal Pinot services (no Kafka/MinIO)
 
 down: ## Stop all Pinot services
 	@echo "${RED}Stopping Pinot cluster...${NC}"
+
+health: ## Check health status of Pinot components
+	@echo "Checking health status of Pinot components..."
+	@for service in $$(docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) ps --services); do \
+		status=$$(docker inspect --format='{{json .State.Health.Status}}' $$(docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) ps -q $$service) 2>/dev/null); \
+		if [ "$$status" != "\"healthy\"" ]; then \
+			echo "Service $$service is not healthy (status: $$status). Check logs for details."; \
+			exit 1; \
+		fi; \
+	done; \
+	echo "All components are healthy!"

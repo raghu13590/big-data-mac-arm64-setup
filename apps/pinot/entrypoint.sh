@@ -18,7 +18,7 @@ wait_for_service() {
 # Function to wait for Zookeeper ensemble
 wait_for_zookeeper_ensemble() {
     echo "Waiting for Zookeeper ensemble to be ready..."
-    local zk_addresses="${ZK_ADDRESS:-zookeeper1:2181,zookeeper2:2181,zookeeper3:2181}"
+    local zk_addresses="${ZK_ADDRESS}"
 
     # Parse comma-separated addresses
     IFS=',' read -ra ZK_ARRAY <<< "$zk_addresses"
@@ -41,7 +41,8 @@ start_controller() {
     # Start Controller
     cd $PINOT_HOME
     bin/pinot-admin.sh StartController \
-        -configFileName "$CONTROLLER_CONF"
+        -clusterName ${PINOT_CLUSTER_NAME} \
+        -zkAddress "${ZK_ADDRESS}"
 }
 
 # Function to start Pinot Broker
@@ -58,9 +59,8 @@ start_broker() {
     # Start Broker
     cd $PINOT_HOME
     bin/pinot-admin.sh StartBroker \
-        -clusterName ${PINOT_CLUSTER_NAME:-PinotCluster} \
-        -zkAddress ${ZK_ADDRESS:-zookeeper1:2181,zookeeper2:2181,zookeeper3:2181} \
-        -configFileName "$BROKER_CONF"
+        -clusterName ${PINOT_CLUSTER_NAME} \
+        -zkAddress "${ZK_ADDRESS}"
 }
 
 # Function to start Pinot Server
@@ -77,9 +77,8 @@ start_server() {
     # Start Server
     cd $PINOT_HOME
     bin/pinot-admin.sh StartServer \
-        -clusterName ${PINOT_CLUSTER_NAME:-PinotCluster} \
-        -zkAddress ${ZK_ADDRESS:-zookeeper1:2181,zookeeper2:2181,zookeeper3:2181} \
-        -configFileName "$SERVER_CONF"
+        -clusterName ${PINOT_CLUSTER_NAME} \
+        -zkAddress "${ZK_ADDRESS}"
 }
 
 # Function to start Pinot Minion
@@ -96,13 +95,12 @@ start_minion() {
     # Start Minion
     cd $PINOT_HOME
     bin/pinot-admin.sh StartMinion \
-        -clusterName ${PINOT_CLUSTER_NAME:-PinotCluster} \
-        -zkAddress ${ZK_ADDRESS:-zookeeper1:2181,zookeeper2:2181,zookeeper3:2181} \
-        -configFileName "$MINION_CONF"
+        -clusterName ${PINOT_CLUSTER_NAME} \
+        -zkAddress "${ZK_ADDRESS}"
 }
 
 # Main execution logic
-case "${PINOT_COMPONENT:-controller}" in
+case "${PINOT_COMPONENT}" in
     controller)
         start_controller
         ;;
