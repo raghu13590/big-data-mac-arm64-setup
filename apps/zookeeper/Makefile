@@ -3,11 +3,6 @@
 
 include ../Makefile.common
 
-ifneq (,$(wildcard .env))
-    include .env
-    export
-endif
-
 up:
 	@$(MAKE) -f ../Makefile.common up HEALTHCHECK=false
 	@echo "Waiting for Zookeeper cluster to stabilize..."; \
