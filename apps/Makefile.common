@@ -88,16 +88,12 @@ dependencies: ## Start all dependencies recursively with cycle detection and cha
 	fi
 
 up: dependencies ## Start all services
-	@echo "${GREEN}Starting services for $(PROJECT_NAME)...${NC}"
+	@echo "${GREEN}\nStarting services for $(PROJECT_NAME)...${NC}"
 	$(DOCKER_COMPOSE) up -d
-	@if [ "$(HEALTHCHECK)" != "false" ]; then \
-		echo "${GREEN}Waiting for services to be healthy...${NC}"; \
-		sleep 30; \
-		make health COMPOSE_FILE=$(COMPOSE_FILE) PROJECT_NAME=$(PROJECT_NAME); \
-		echo "${GREEN}Services are up!${NC}"; \
-	else \
-		echo "${YELLOW}Skipping health check as requested.${NC}"; \
-	fi
+	@echo "${GREEN}Waiting for services to be healthy...${NC}"
+	sleep 30
+	make health COMPOSE_FILE=$(COMPOSE_FILE) PROJECT_NAME=$(PROJECT_NAME)
+	@echo "${GREEN}Services are up!${NC}"
 
 down: ## Stop all services
 	@echo "${RED}Stopping services for $(PROJECT_NAME)...${NC}"

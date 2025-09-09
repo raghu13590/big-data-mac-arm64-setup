@@ -3,46 +3,25 @@
 
 include ../Makefile.common
 
-up:
-	@$(MAKE) -f ../Makefile.common up HEALTHCHECK=false
-	@echo "Waiting for Zookeeper cluster to stabilize..."; \
-	sleep 20
-	$(MAKE) health VERBOSE=true
-
 health:
 	@services=$$(docker compose -f docker-compose.yml config --services); \
 	for svc in $$services; do \
-		if [ "$(VERBOSE)" = "true" ]; then \
-			echo "performing health check for $$svc..."; \
-			echo "Checking status of $$svc..."; \
-		fi; \
+		echo "$${YELLOW}Checking health of $$svc...$${NC}"; \
 		status_output=$$(docker exec $$svc zkServer.sh status 2>&1); \
-		if [ "$(VERBOSE)" = "true" ]; then \
-			echo "$$status_output"; \
-		fi; \
 		mode=$$(echo "$$status_output" | grep -oE 'Mode: (leader|follower|standalone)'); \
-		if [ -n "$$mode" ]; then \
-			if [ "$(VERBOSE)" = "true" ]; then echo "$$mode"; fi; \
+		if [ -n "$$mode" ]; then :; \
 		else \
-			echo "Error: Could not determine mode for $$svc."; \
+			echo "$${RED}Error: Could not determine mode for $$svc.$${NC}"; \
 			exit 1; \
 		fi; \
 		if ! echo "$$status_output" | grep -E "Client port found|Mode"; then \
-			echo "Error: $$svc is not healthy."; \
+			echo "$${RED}Error: $$svc is not healthy.$${NC}"; \
 			exit 1; \
-		fi; \
-		if [ "$(VERBOSE)" = "true" ]; then \
-			echo "Checking AdminServer for $$svc..."; \
 		fi; \
 		admin_port=$$(echo $$svc | grep -oE '[0-9]+'); \
 		admin_url="http://localhost:808$$admin_port/commands"; \
-		if curl -sSf "$$admin_url" > /dev/null; then \
-			if [ "$(VERBOSE)" = "true" ]; then \
-				echo "AdminServer for $$svc is accessible."; \
-				echo "$$svc is running and healthy."; \
-			fi; \
-		else \
-			echo "Error: AdminServer for $$svc is not accessible."; \
+		if ! curl -sSf "$$admin_url" > /dev/null; then \
+			echo "$${RED}Error: AdminServer for $$svc is not accessible.$${NC}"; \
 			exit 1; \
 		fi; \
 	done
