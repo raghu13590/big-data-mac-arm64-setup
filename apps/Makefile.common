@@ -1,4 +1,13 @@
 # Top-level Makefile for Docker Compose management
+# Usage:
+#   make -C <service_dir> <target>
+# Example:
+#   make -C apps/zookeeper up
+#   make -C apps/zookeeper down
+#   make -C apps/zookeeper health
+#
+# The -C option ensures that the Makefile in the specified directory is used,
+# allowing you to run commands from any directory.
 .PHONY: help build build-quick up up-minimal down restart logs clean status health
 
 # Colors for output
@@ -9,15 +18,22 @@ NC = \033[0m # No Color
 
 export RED GREEN YELLOW NC
 
+MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+COMPOSE_FILE ?= $(MAKEFILE_DIR)/docker-compose.yml
+PROJECT_NAME ?= $(notdir $(MAKEFILE_DIR))
+
 DOCKER_COMPOSE = docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME)
 
 help: ## Show this help message
 	@echo "${GREEN}Top-Level Makefile for Docker Compose Management${NC}"
 	@echo ""
 	@echo "Usage:"
-	@echo "  ${YELLOW}make${NC} ${GREEN}<target>${NC} [COMPOSE_FILE=<path>] [PROJECT_NAME=<name>]"
+	@echo "  ${YELLOW}make -C <service_dir> <target>${NC}"
 	@echo ""
-	@echo "Targets:"
+	@echo "Examples:"
+	@echo "  ${YELLOW}make -C apps/zookeeper up${NC}"
+	@echo "  ${YELLOW}make -C apps/zookeeper down${NC}"
+	@echo "  ${YELLOW}make -C apps/zookeeper health${NC}"
 	@awk 'BEGIN {FS = ":.*?## "} { \
 		if (/^[a-zA-Z_-]+:.*?##/) \
 			printf "  ${YELLOW}%-20s${NC} %s\n", $$1, $$2 \
