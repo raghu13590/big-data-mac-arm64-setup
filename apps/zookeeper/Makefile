@@ -1,20 +1,18 @@
-# Zookeeper Makefile delegating to Top-Level Makefile
+# Zookeeper Makefile.common delegating to Top-Level Makefile.common
 .PHONY: up down build restart logs clean status health
+
+include ../Makefile.common
 
 ifneq (,$(wildcard .env))
     include .env
     export
 endif
 
-DOCKER_ARGS = COMPOSE_FILE=$(PROJECT_NAME)/$(COMPOSE_FILE) PROJECT_NAME=$(PROJECT_NAME)
-
 up:
-	$(MAKE) -C .. up HEALTHCHECK=false $(DOCKER_ARGS)
+	@$(MAKE) -f ../Makefile.common up HEALTHCHECK=false
 	@echo "Waiting for Zookeeper cluster to stabilize..."; \
 	sleep 20
 	$(MAKE) health VERBOSE=true
-down:
-	$(MAKE) -C .. down $(DOCKER_ARGS)
 
 health:
 	@services=$$(docker compose -f docker-compose.yml config --services); \
@@ -53,5 +51,3 @@ health:
 			exit 1; \
 		fi; \
 	done
-
-
