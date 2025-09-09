@@ -1,4 +1,4 @@
-# Pinot Makefile delegating to Top-Level Makefile.common
+# Zoonavigator Makefile delegating to Top-Level Makefile.common
 .PHONY: up down build restart logs clean status health
 
 ifneq (,$(wildcard .env))
