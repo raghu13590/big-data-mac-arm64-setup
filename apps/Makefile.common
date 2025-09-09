@@ -18,6 +18,12 @@ NC = \033[0m # No Color
 
 export RED GREEN YELLOW NC
 
+# Load .env file if it exists in the current directory
+ifneq (,$(wildcard $(CURDIR)/.env))
+    include $(CURDIR)/.env
+    export
+endif
+
 MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 COMPOSE_FILE ?= $(MAKEFILE_DIR)/docker-compose.yml
 PROJECT_NAME ?= $(notdir $(MAKEFILE_DIR))
@@ -48,7 +54,40 @@ build-quick: ## Quick build (uses cache)
 	@echo "${GREEN}Building Docker images for $(PROJECT_NAME)...${NC}"
 	$(DOCKER_COMPOSE) build
 
-up: ## Start all services
+dependencies: ## Start all dependencies recursively with cycle detection and chain logging
+	@if [ -n "$(DEPENDENCIES)" ] && [ "$(DEPENDENCIES)" != "null" ]; then \
+		start_deps() { \
+			local deps="$$1"; \
+			local visited="$$2"; \
+			local chain="$$3"; \
+			for dep in $$(echo $$deps | tr ',' ' '); do \
+				if echo "$$visited" | grep -qw "$$dep"; then \
+					echo "${YELLOW}DEBUG: Skipping already processed dependency: $$dep${NC}"; \
+					continue; \
+				fi; \
+				if [ "$$dep" = "$(PROJECT_NAME)" ]; then \
+					echo "${RED}Error: Project $(PROJECT_NAME) cannot depend on itself.${NC}"; \
+					exit 1; \
+				fi; \
+				dep_dir=$$(find .. -type f -name ".env" -exec grep -l "PROJECT_NAME=$$dep" {} + | xargs dirname | head -n 1); \
+				if [ -z "$$dep_dir" ]; then \
+					echo "${RED}Error: Could not find directory for dependency: $$dep${NC}"; \
+					exit 1; \
+				fi; \
+				echo "${GREEN}DEBUG: Dependency chain: $$chain -> $$dep${NC}"; \
+				dep_env=$$(cat $$dep_dir/.env | grep "^DEPENDENCIES=" | cut -d'=' -f2); \
+				if [ -n "$$dep_env" ] && [ "$$dep_env" != "null" ]; then \
+					start_deps "$$dep_env" "$$visited $$dep" "$$chain -> $$dep"; \
+				fi; \
+				echo "${GREEN}DEBUG: Starting dependency: $$dep in directory: $$dep_dir...${NC}"; \
+				$(MAKE) -C $$dep_dir DEPENDENCIES= up; \
+				visited="$$visited $$dep"; \
+			done; \
+		}; \
+		start_deps "$(DEPENDENCIES)" "" "$(PROJECT_NAME)"; \
+	fi
+
+up: dependencies ## Start all services
 	@echo "${GREEN}Starting services for $(PROJECT_NAME)...${NC}"
 	$(DOCKER_COMPOSE) up -d
 	@if [ "$(HEALTHCHECK)" != "false" ]; then \
