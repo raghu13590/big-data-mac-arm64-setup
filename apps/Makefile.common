@@ -60,51 +60,62 @@ build-quick: ## Quick build (uses cache)
 	@echo "${GREEN}Building Docker images for $(PROJECT_NAME)...${NC}"
 	$(DOCKER_COMPOSE) build
 
-dependencies: ## Start all dependencies recursively with cycle detection and chain logging
-	@echo "${YELLOW}DEBUG: In dependencies target${NC}"
+dependencies: ## Start all dependencies in correct order
 	@if [ -n "$(DEPENDENCIES)" ] && [ "$(DEPENDENCIES)" != "null" ]; then \
-	    echo "${YELLOW}DEBUG: CURDIR=$(CURDIR)${NC}"; \
-        echo "${YELLOW}DEBUG: PROJECT_NAME=$(PROJECT_NAME)${NC}"; \
-        echo "${YELLOW}DEBUG: DEPENDENCIES=$(DEPENDENCIES)${NC}"; \
-		visited_file="/tmp/visited_$$.txt"; \
-		trap "rm -f $$visited_file" EXIT; \
-		touch $$visited_file; \
-		start_deps() { \
-			local deps="$$1"; \
-			local chain="$$2"; \
-			for dep in $$(echo $$deps | tr ',' ' '); do \
-				if grep -qw "$$dep" $$visited_file; then \
-					echo "${YELLOW}DEBUG: Skipping already processed dependency: $$dep${NC}"; \
-					continue; \
-				fi; \
-				if [ "$$dep" = "$(PROJECT_NAME)" ]; then \
-					echo "${RED}Error: Project $(PROJECT_NAME) cannot depend on itself.${NC}"; \
-					exit 1; \
-				fi; \
-				dep_dir=$$(find .. -type f -name ".env" -exec grep -l "PROJECT_NAME=$$dep" {} + | xargs dirname | head -n 1); \
-				if [ -z "$$dep_dir" ]; then \
-					echo "${RED}Error: Could not find directory for dependency: $$dep${NC}"; \
-					exit 1; \
-				fi; \
-				echo "${GREEN}DEBUG: Dependency chain: $$chain -> $$dep${NC}"; \
-				dep_env=$$(cat $$dep_dir/.env | grep "^DEPENDENCIES=" | cut -d'=' -f2); \
-				if [ -n "$$dep_env" ] && [ "$$dep_env" != "null" ]; then \
-					start_deps "$$dep_env" "$$chain -> $$dep"; \
-				fi; \
-				echo "$$dep" >> $$visited_file; \
-				echo "${GREEN}DEBUG: Starting dependency: $$dep in directory: $$dep_dir...${NC}"; \
-				$(MAKE) -C $$dep_dir up || exit 1; \
-			done; \
+		echo "${GREEN}Resolving dependency tree for $(PROJECT_NAME)...${NC}"; \
+		dep_file=$$(mktemp /tmp/deps.XXXXXX); \
+		project_file=$$(mktemp /tmp/projects.XXXXXX); \
+		trap "rm -f $$dep_file $$project_file" EXIT; \
+		\
+		find_all_deps() { \
+			local project="$$1"; \
+			local parent="$$2"; \
+			\
+			if [ -n "$$parent" ]; then \
+				echo "$$project $$parent" >> "$$dep_file"; \
+			fi; \
+			\
+			if grep -qw "$$project" "$$project_file"; then return; fi; \
+			echo "$$project" >> "$$project_file"; \
+			\
+			local project_dir=$$(find .. -maxdepth 2 -type f -name ".env" -exec grep -l "PROJECT_NAME=$$project" {} + | xargs dirname | head -n 1); \
+			if [ -z "$$project_dir" ]; then \
+				echo "${RED}Error: Could not find directory for project: $$project${NC}"; \
+				exit 1; \
+			fi; \
+			\
+			local deps=$$(grep '^DEPENDENCIES=' "$$project_dir/.env" | cut -d= -f2 | tr -d '[:space:]'); \
+			if [ -n "$$deps" ] && [ "$$deps" != "null" ]; then \
+				for d in $$(echo $$deps | tr ',' ' '); do \
+					find_all_deps "$$d" "$$project"; \
+				done; \
+			fi; \
 		}; \
-		start_deps "$(DEPENDENCIES)" "$(PROJECT_NAME)"; \
+		\
+		find_all_deps "$(PROJECT_NAME)"; \
+		\
+		sorted_deps=$$(tsort "$$dep_file" 2>/dev/null); \
+		if [ $$? -ne 0 ]; then \
+			if ! tsort "$$dep_file" >/dev/null 2>&1; then \
+				echo "${RED}Error: Circular dependency detected. Please check your .env files.${NC}"; \
+				exit 1; \
+			fi; \
+		fi; \
+		\
+		echo "${GREEN}Dependency start order:${NC} $$sorted_deps"; \
+		\
+		for dep in $$sorted_deps; do \
+			if [ "$$dep" = "$(PROJECT_NAME)" ]; then continue; fi; \
+			dep_dir=$$(find .. -maxdepth 2 -type f -name ".env" -exec grep -l "PROJECT_NAME=$$dep" {} + | xargs dirname | head -n 1); \
+			echo "${GREEN}--- Starting dependency '$$dep' in '$$dep_dir'...${NC}"; \
+			$(MAKE) -C "$$dep_dir" up-minimal; \
+			echo "${GREEN}--- Finished dependency '$$dep' ---${NC}"; \
+		done; \
 	fi
 
-up: ## Start all services with dependencies, initialization and health checks
-	@echo "${YELLOW}DEBUG: In up target${NC}"
-	@$(MAKE) dependencies
-	@echo "${YELLOW}DEBUG: COMPOSE_FILE=$(COMPOSE_FILE)${NC}"
-	@echo "${YELLOW}DEBUG: PROJECT_NAME=$(PROJECT_NAME)${NC}"
-	@echo "${YELLOW}DEBUG: CURDIR=$(CURDIR)${NC}"
+up: dependencies up-minimal ## Start all services with dependencies
+
+up-minimal: ## Start services for this project only, without dependencies
 	@echo "${GREEN}\nStarting services for $(PROJECT_NAME)...${NC}"
 	@$(MAKE) init
 	$(DOCKER_COMPOSE) up -d
