@@ -3,6 +3,23 @@
 
 include ../Makefile.common
 
+up: init-data
+	@$(MAKE) -f ../Makefile.common up
+
+init-data:
+	@ids="$$(docker compose config | grep ZOO_SERVER_ID | awk -F: '{gsub(/[" ]/, "", $$2); print $$2}')"; \
+	# echo "Zookeeper IDs found :\n $$ids"; \
+	for id in $$ids; do \
+	   instance_dir=../../app-data/zookeeper/zookeeper$$id/data; \
+	   myid_file=$$instance_dir/myid; \
+	   mkdir -p $$instance_dir; \
+	   echo $$id > $$myid_file; \
+	   if [ ! -f $$myid_file ]; then \
+	      echo "Error: myid file for zookeeper$$id was not created."; \
+	      exit 1; \
+	   fi; \
+	done
+
 health:
 	@services=$$(docker compose -f docker-compose.yml config --services); \
 	for svc in $$services; do \

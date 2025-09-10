@@ -80,7 +80,7 @@ dependencies: ## Start all dependencies recursively with cycle detection and cha
 					start_deps "$$dep_env" "$$visited $$dep" "$$chain -> $$dep"; \
 				fi; \
 				echo "${GREEN}DEBUG: Starting dependency: $$dep in directory: $$dep_dir...${NC}"; \
-				$(MAKE) -C $$dep_dir DEPENDENCIES= up; \
+				$(MAKE) -C $$dep_dir DEPENDENCIES= up || exit 1; \
 				visited="$$visited $$dep"; \
 			done; \
 		}; \
