@@ -87,13 +87,16 @@ dependencies: ## Start all dependencies recursively with cycle detection and cha
 		start_deps "$(DEPENDENCIES)" "" "$(PROJECT_NAME)"; \
 	fi
 
-up: dependencies ## Start all services
+up: dependencies
 	@echo "${GREEN}\nStarting services for $(PROJECT_NAME)...${NC}"
+	$(MAKE) init
 	$(DOCKER_COMPOSE) up -d
 	@echo "${GREEN}Waiting for services to be healthy...${NC}"
 	sleep 30
-	make health COMPOSE_FILE=$(COMPOSE_FILE) PROJECT_NAME=$(PROJECT_NAME)
+	$(MAKE) health COMPOSE_FILE=$(COMPOSE_FILE) PROJECT_NAME=$(PROJECT_NAME)
 	@echo "${GREEN}Services are up!${NC}"
+
+init: ## override in service-specific Makefile if needed
 
 down: ## Stop all services
 	@echo "${RED}Stopping services for $(PROJECT_NAME)...${NC}"

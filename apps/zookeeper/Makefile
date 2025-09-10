@@ -3,12 +3,9 @@
 
 include ../Makefile.common
 
-up: init-data
-	@$(MAKE) -f ../Makefile.common up
-
-init-data:
+init:
 	@ids="$$(docker compose config | grep ZOO_SERVER_ID | awk -F: '{gsub(/[" ]/, "", $$2); print $$2}')"; \
-	# echo "Zookeeper IDs found :\n $$ids"; \
+	echo "creating myId files for zookeeper instances :\n$$ids"; \
 	for id in $$ids; do \
 	   instance_dir=../../app-data/zookeeper/zookeeper$$id/data; \
 	   myid_file=$$instance_dir/myid; \
