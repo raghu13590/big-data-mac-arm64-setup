@@ -1,156 +1,122 @@
-# Top-level Makefile for Docker Compose management
-# Usage:
-#   make -C <service_dir> <target>
-# Example:
-#   make -C apps/zookeeper up
-#   make -C apps/zookeeper down
-#   make -C apps/zookeeper health
+# Common Makefile for Docker Compose management of services.
+# This Makefile is intended to be included from the top-level Makefile in each service directory.
 #
-# The -C option ensures that the Makefile in the specified directory is used,
-# allowing you to run commands from any directory.
-.PHONY: help build build-quick up up-minimal down restart logs clean status health
+# Features:
+# - Manages Docker Compose services for individual projects.
+# - Handles dependencies between services.
+# - Provides common targets for building, starting, stopping, and cleaning up services.
+# - Self-documenting help command.
+#
+# Usage:
+#   make <target>
+#
+# Example from a service directory (e.g., apps/zookeeper):
+#   make up       # Starts zookeeper and its dependencies
+#   make down     # Stops zookeeper
+#   make health   # Checks the health of zookeeper
+#
 
-# Colors for output
-RED = \033[0;31m
-GREEN = \033[0;32m
-YELLOW = \033[1;33m
-NC = \033[0m # No Color
+# Phony targets prevent conflicts with file names
+.PHONY: help build build-quick up up-minimal down down-volumes restart logs clean status ps health dependencies init
 
-export RED GREEN YELLOW NC
+# Define colors for console output
+RED := $(shell tput setaf 1)
+GREEN := $(shell tput setaf 2)
+YELLOW := $(shell tput setaf 3)
+NC := $(shell tput sgr0)
 
-# Reset DEPENDENCIES before including .env
-DEPENDENCIES=
-# Load .env file for each project
+# Export all variables to sub-makes
+.EXPORT_ALL_VARIABLES:
+
+# Load environment variables from .env file if it exists
 ifneq (,$(wildcard $(CURDIR)/.env))
     include $(CURDIR)/.env
-    export
 endif
 
-# PROJECT_NAME is required in .env file which should match the directory name
+# Ensure PROJECT_NAME is set
 ifndef PROJECT_NAME
-$(error PROJECT_NAME is not defined. Please set it in your .env file or environment and should match the directory name.)
+    $(error PROJECT_NAME is not defined. Please set it in your .env file.)
 endif
-MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-# docker-compose.yml is expected to be in the directory with PROJECT_NAME defined in .env
-COMPOSE_FILE := $(MAKEFILE_DIR)docker-compose.yml
 
-DOCKER_COMPOSE = docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME)
+# Define paths and commands
+ROOT_DIR := $(abspath $(CURDIR)/../..)
+SCRIPTS_DIR := $(ROOT_DIR)/apps/scripts
+COMPOSE_FILE := $(CURDIR)/docker-compose.yml
+DOCKER_COMPOSE := docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME)
+
+# Default target
+all: help
 
 help: ## Show this help message
-	@echo "${GREEN}Top-Level Makefile for Docker Compose Management${NC}"
+	@echo "Usage: make <target>"
 	@echo ""
-	@echo "Usage:"
-	@echo "  ${YELLOW}make -C <service_dir> <target>${NC}"
-	@echo ""
-	@echo "Examples:"
-	@echo "  ${YELLOW}make -C apps/zookeeper up${NC}"
-	@echo "  ${YELLOW}make -C apps/zookeeper down${NC}"
-	@echo "  ${YELLOW}make -C apps/zookeeper health${NC}"
-	@awk 'BEGIN {FS = ":.*?## "} { \
-		if (/^[a-zA-Z_-]+:.*?##/) \
-			printf "  ${YELLOW}%-20s${NC} %s\n", $$1, $$2 \
-	}' $(MAKEFILE_LIST)
+	@echo "Available targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "  %-20s %s\n", "$(YELLOW)"$$1"$(NC)", $$2}' $(MAKEFILE_LIST)
 
-build: ## Build Docker images (no cache)
-	@echo "${GREEN}Building Docker images for $(PROJECT_NAME)...${NC}"
+build: ## Build Docker images without using cache
+	@echo "$(GREEN)Building Docker images for $(PROJECT_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) build --no-cache
-	@echo "${GREEN}Build complete!${NC}"
+	@echo "$(GREEN)Build complete!$(NC)"
 
-build-quick: ## Quick build (uses cache)
-	@echo "${GREEN}Building Docker images for $(PROJECT_NAME)...${NC}"
+build-quick: ## Build Docker images using cache
+	@echo "$(GREEN)Building Docker images for $(PROJECT_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) build
 
-dependencies: ## Start all dependencies in correct order
+dependencies: ## Start all dependencies in the correct order
 	@if [ -n "$(DEPENDENCIES)" ] && [ "$(DEPENDENCIES)" != "null" ]; then \
-		echo "${GREEN}Resolving dependency tree for $(PROJECT_NAME)...${NC}"; \
-		dep_file=$$(mktemp /tmp/deps.XXXXXX); \
-		project_file=$$(mktemp /tmp/projects.XXXXXX); \
-		trap "rm -f $$dep_file $$project_file" EXIT; \
-		\
-		find_all_deps() { \
-			local project="$$1"; \
-			local parent="$$2"; \
-			\
-			if [ -n "$$parent" ]; then \
-				echo "$$project $$parent" >> "$$dep_file"; \
-			fi; \
-			\
-			if grep -qw "$$project" "$$project_file"; then return; fi; \
-			echo "$$project" >> "$$project_file"; \
-			\
-			local project_dir=$$(find .. -maxdepth 2 -type f -name ".env" -exec grep -l "PROJECT_NAME=$$project" {} + | xargs dirname | head -n 1); \
-			if [ -z "$$project_dir" ]; then \
-				echo "${RED}Error: Could not find directory for project: $$project${NC}"; \
-				exit 1; \
-			fi; \
-			\
-			local deps=$$(grep '^DEPENDENCIES=' "$$project_dir/.env" | cut -d= -f2 | tr -d '[:space:]'); \
-			if [ -n "$$deps" ] && [ "$$deps" != "null" ]; then \
-				for d in $$(echo $$deps | tr ',' ' '); do \
-					find_all_deps "$$d" "$$project"; \
-				done; \
-			fi; \
-		}; \
-		\
-		find_all_deps "$(PROJECT_NAME)"; \
-		\
-		sorted_deps=$$(tsort "$$dep_file" 2>/dev/null); \
-		if [ $$? -ne 0 ]; then \
-			if ! tsort "$$dep_file" >/dev/null 2>&1; then \
-				echo "${RED}Error: Circular dependency detected. Please check your .env files.${NC}"; \
-				exit 1; \
-			fi; \
-		fi; \
-		\
-		echo "${GREEN}Dependency start order:${NC} $$sorted_deps"; \
-		\
-		for dep in $$sorted_deps; do \
-			if [ "$$dep" = "$(PROJECT_NAME)" ]; then continue; fi; \
-			dep_dir=$$(find .. -maxdepth 2 -type f -name ".env" -exec grep -l "PROJECT_NAME=$$dep" {} + | xargs dirname | head -n 1); \
-			echo "${GREEN}--- Starting dependency '$$dep' in '$$dep_dir'...${NC}"; \
-			$(MAKE) -C "$$dep_dir" up-minimal; \
-			echo "${GREEN}--- Finished dependency '$$dep' ---${NC}"; \
-		done; \
+		"$(SCRIPTS_DIR)/resolve-deps.sh" "$(PROJECT_NAME)"; \
 	fi
 
-up: dependencies up-minimal ## Start all services with dependencies
+up: dependencies up-minimal ## Start all services, including dependencies
 
-up-minimal: ## Start services for this project only, without dependencies
-	@echo "${GREEN}\nStarting services for $(PROJECT_NAME)...${NC}"
+up-minimal: ## Start services for this project only
+	@echo "$(GREEN)Starting services for $(PROJECT_NAME)...$(NC)"
 	@$(MAKE) init
 	$(DOCKER_COMPOSE) up -d
-	@echo "${GREEN}Waiting for services to be healthy...${NC}"
-	sleep 30
-	@$(MAKE) health COMPOSE_FILE=$(COMPOSE_FILE) PROJECT_NAME=$(PROJECT_NAME)
-	@echo "${GREEN}Services are up!${NC}"
+	@echo "$(GREEN)Waiting for services to be healthy...$(NC)"
+	@sleep 30
+	@$(MAKE) health
+	@echo "$(GREEN)Services for $(PROJECT_NAME) are up and healthy!$(NC)"
 
-init: ## override in service-specific Makefile if needed
+init: ## Initialize service-specific resources (override in service Makefile if needed)
+	@: # No-op
 
-down: ## Stop all services
-	@echo "${RED}Stopping services for $(PROJECT_NAME)...${NC}"
+down: ## Stop all services for this project
+	@echo "$(RED)Stopping services for $(PROJECT_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) down
 
-restart: down up ## Restart all services
+down-volumes: ## Stop all services and remove volumes
+	@echo "$(RED)Stopping services and removing volumes for $(PROJECT_NAME)...$(NC)"
+	$(DOCKER_COMPOSE) down -v
 
-logs: ## View logs
-	@echo "${GREEN}Viewing logs for $(PROJECT_NAME)...${NC}"
+restart: ## Restart all services
+	@$(MAKE) down
+	@$(MAKE) up
+
+logs: ## View logs for all services
+	@echo "$(GREEN)Viewing logs for $(PROJECT_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) logs -f
 
 clean: ## Remove unused Docker resources
-	@echo "${RED}Cleaning up unused Docker resources...${NC}"
+	@echo "$(RED)Cleaning up unused Docker resources...$(NC)"
 	docker system prune -f
 
-status: ## List running services
-	@echo "${GREEN}Listing running services for $(PROJECT_NAME)...${NC}"
+status: ## List running services for this project
+	@echo "$(GREEN)Listing running services for $(PROJECT_MAME)...$(NC)"
 	$(DOCKER_COMPOSE) ps
 
-health: ## Check health status of all components
-	@echo "${GREEN}Checking health status of components for $(PROJECT_NAME)...${NC}"
-	@for service in $$($(DOCKER_COMPOSE) ps --services); do \
-		status=$$(docker inspect --format='{{json .State.Health.Status}}' $$($(DOCKER_COMPOSE) ps -q $$service) 2>/dev/null); \
-		if [ "$$status" != "\"healthy\"" ]; then \
-			echo "Service $$service is not healthy (status: $$status). Check logs for details."; \
+ps: status ## Alias for status
+
+health: ## Check the health status of all components
+	@echo "$(GREEN)Checking health status for $(PROJECT_NAME)...$(NC)"
+	@services=$$($(DOCKER_COMPOSE) ps --services); \
+	for service in $$services; do \
+		health_status=$$(docker inspect --format='{{.State.Health.Status}}' $$($(DOCKER_COMPOSE) ps -q $$service) 2>/dev/null); \
+		if [ "$$health_status" = "unhealthy" ]; then \
+			echo "$(RED)Service $$service is unhealthy.$(NC)"; \
 			exit 1; \
+		elif [ "$$health_status" != "healthy" ]; then \
+			echo "$(YELLOW)Service $$service is not healthy (status: $$health_status), but continuing...$(NC)"; \
 		fi; \
-	done; \
-	echo "All components are healthy!"
+	done
+	@echo "$(GREEN)All components are healthy!$(NC)"

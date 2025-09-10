@@ -1,6 +1,7 @@
-# Zookeeper Makefile.common delegating to Top-Level Makefile.common
+# Zookeeper Makefile
 .PHONY: up down build restart logs clean status health
 
+# Include the common Makefile
 include ../Makefile.common
 
 init:

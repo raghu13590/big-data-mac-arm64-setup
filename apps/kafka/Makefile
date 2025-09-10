@@ -1,4 +1,4 @@
-# Kafka Makefile delegating to Top-Level Makefile.common
-.PHONY: up down build restart logs clean status health
+# Kafka Makefile
 
+# Include the common Makefile
 include ../Makefile.common
