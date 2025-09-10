@@ -18,17 +18,21 @@ NC = \033[0m # No Color
 
 export RED GREEN YELLOW NC
 
-# Load .env file if it exists in the current directory
+# Reset DEPENDENCIES before including .env
+DEPENDENCIES=
+# Load .env file for each project
 ifneq (,$(wildcard $(CURDIR)/.env))
     include $(CURDIR)/.env
     export
 endif
 
+# PROJECT_NAME is required in .env file which should match the directory name
 ifndef PROJECT_NAME
-$(error PROJECT_NAME is not defined. Please set it in your .env file or environment.)
+$(error PROJECT_NAME is not defined. Please set it in your .env file or environment and should match the directory name.)
 endif
 MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-COMPOSE_FILE ?= $(MAKEFILE_DIR)/docker-compose.yml
+# docker-compose.yml is expected to be in the directory with PROJECT_NAME defined in .env
+COMPOSE_FILE := $(MAKEFILE_DIR)docker-compose.yml
 
 DOCKER_COMPOSE = docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME)
 
@@ -57,7 +61,11 @@ build-quick: ## Quick build (uses cache)
 	$(DOCKER_COMPOSE) build
 
 dependencies: ## Start all dependencies recursively with cycle detection and chain logging
+	@echo "${YELLOW}DEBUG: In dependencies target${NC}"
 	@if [ -n "$(DEPENDENCIES)" ] && [ "$(DEPENDENCIES)" != "null" ]; then \
+	    echo "${YELLOW}DEBUG: CURDIR=$(CURDIR)${NC}"; \
+	    echo "${YELLOW}DEBUG: PROJECT_NAME=$(PROJECT_NAME)${NC}"; \
+	    echo "${YELLOW}DEBUG: DEPENDENCIES=$(DEPENDENCIES)${NC}"; \
 		start_deps() { \
 			local deps="$$1"; \
 			local visited="$$2"; \
@@ -67,14 +75,14 @@ dependencies: ## Start all dependencies recursively with cycle detection and cha
 					echo "${YELLOW}DEBUG: Skipping already processed dependency: $$dep${NC}"; \
 					continue; \
 				fi; \
+				if [ "$$dep" = "$(PROJECT_NAME)" ]; then \
+					echo "${RED}Error: Project $(PROJECT_NAME) cannot depend on itself.${NC}"; \
+					exit 1; \
+				fi; \
 				dep_dir=$$(find .. -type f -name ".env" -exec grep -l "PROJECT_NAME=$$dep" {} + | xargs dirname | head -n 1); \
 				if [ -z "$$dep_dir" ]; then \
 					echo "${RED}Error: Could not find directory for dependency: $$dep${NC}"; \
 					exit 1; \
-				fi; \
-				dep_compose_file=$$(grep "^COMPOSE_FILE=" $$dep_dir/.env | cut -d'=' -f2); \
-				if [ -z "$$dep_compose_file" ]; then \
-					dep_compose_file="$$dep_dir/docker-compose.yml"; \
 				fi; \
 				echo "${GREEN}DEBUG: Dependency chain: $$chain -> $$dep${NC}"; \
 				dep_env=$$(cat $$dep_dir/.env | grep "^DEPENDENCIES=" | cut -d'=' -f2); \
@@ -82,20 +90,25 @@ dependencies: ## Start all dependencies recursively with cycle detection and cha
 					start_deps "$$dep_env" "$$visited $$dep" "$$chain -> $$dep"; \
 				fi; \
 				echo "${GREEN}DEBUG: Starting dependency: $$dep in directory: $$dep_dir...${NC}"; \
-				$(MAKE) -C $$dep_dir DEPENDENCIES= COMPOSE_FILE=$$dep_compose_file PROJECT_NAME=$$dep up || exit 1; \
+				$(MAKE) -C $$dep_dir up || exit 1; \
 				visited="$$visited $$dep"; \
 			done; \
 		}; \
 		start_deps "$(DEPENDENCIES)" "" "$(PROJECT_NAME)"; \
 	fi
 
-up: dependencies
+up: ## Start all services with dependencies, initialization and health checks
+	@echo "${YELLOW}DEBUG: In up target${NC}"
+	@$(MAKE) dependencies
+	@echo "${YELLOW}DEBUG: COMPOSE_FILE=$(COMPOSE_FILE)${NC}"
+	@echo "${YELLOW}DEBUG: PROJECT_NAME=$(PROJECT_NAME)${NC}"
+	@echo "${YELLOW}DEBUG: CURDIR=$(CURDIR)${NC}"
 	@echo "${GREEN}\nStarting services for $(PROJECT_NAME)...${NC}"
-	$(MAKE) init
+	@$(MAKE) init
 	$(DOCKER_COMPOSE) up -d
 	@echo "${GREEN}Waiting for services to be healthy...${NC}"
 	sleep 30
-	$(MAKE) health COMPOSE_FILE=$(COMPOSE_FILE) PROJECT_NAME=$(PROJECT_NAME)
+	@$(MAKE) health COMPOSE_FILE=$(COMPOSE_FILE) PROJECT_NAME=$(PROJECT_NAME)
 	@echo "${GREEN}Services are up!${NC}"
 
 init: ## override in service-specific Makefile if needed
