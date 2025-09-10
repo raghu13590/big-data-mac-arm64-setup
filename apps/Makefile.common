@@ -64,14 +64,16 @@ dependencies: ## Start all dependencies recursively with cycle detection and cha
 	@echo "${YELLOW}DEBUG: In dependencies target${NC}"
 	@if [ -n "$(DEPENDENCIES)" ] && [ "$(DEPENDENCIES)" != "null" ]; then \
 	    echo "${YELLOW}DEBUG: CURDIR=$(CURDIR)${NC}"; \
-	    echo "${YELLOW}DEBUG: PROJECT_NAME=$(PROJECT_NAME)${NC}"; \
-	    echo "${YELLOW}DEBUG: DEPENDENCIES=$(DEPENDENCIES)${NC}"; \
+        echo "${YELLOW}DEBUG: PROJECT_NAME=$(PROJECT_NAME)${NC}"; \
+        echo "${YELLOW}DEBUG: DEPENDENCIES=$(DEPENDENCIES)${NC}"; \
+		visited_file="/tmp/visited_$$.txt"; \
+		trap "rm -f $$visited_file" EXIT; \
+		touch $$visited_file; \
 		start_deps() { \
 			local deps="$$1"; \
-			local visited="$$2"; \
-			local chain="$$3"; \
+			local chain="$$2"; \
 			for dep in $$(echo $$deps | tr ',' ' '); do \
-				if echo "$$visited" | grep -qw "$$dep"; then \
+				if grep -qw "$$dep" $$visited_file; then \
 					echo "${YELLOW}DEBUG: Skipping already processed dependency: $$dep${NC}"; \
 					continue; \
 				fi; \
@@ -87,14 +89,14 @@ dependencies: ## Start all dependencies recursively with cycle detection and cha
 				echo "${GREEN}DEBUG: Dependency chain: $$chain -> $$dep${NC}"; \
 				dep_env=$$(cat $$dep_dir/.env | grep "^DEPENDENCIES=" | cut -d'=' -f2); \
 				if [ -n "$$dep_env" ] && [ "$$dep_env" != "null" ]; then \
-					start_deps "$$dep_env" "$$visited $$dep" "$$chain -> $$dep"; \
+					start_deps "$$dep_env" "$$chain -> $$dep"; \
 				fi; \
+				echo "$$dep" >> $$visited_file; \
 				echo "${GREEN}DEBUG: Starting dependency: $$dep in directory: $$dep_dir...${NC}"; \
 				$(MAKE) -C $$dep_dir up || exit 1; \
-				visited="$$visited $$dep"; \
 			done; \
 		}; \
-		start_deps "$(DEPENDENCIES)" "" "$(PROJECT_NAME)"; \
+		start_deps "$(DEPENDENCIES)" "$(PROJECT_NAME)"; \
 	fi
 
 up: ## Start all services with dependencies, initialization and health checks
