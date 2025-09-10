@@ -24,9 +24,11 @@ ifneq (,$(wildcard $(CURDIR)/.env))
     export
 endif
 
+ifndef PROJECT_NAME
+$(error PROJECT_NAME is not defined. Please set it in your .env file or environment.)
+endif
 MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 COMPOSE_FILE ?= $(MAKEFILE_DIR)/docker-compose.yml
-PROJECT_NAME ?= $(notdir $(MAKEFILE_DIR))
 
 DOCKER_COMPOSE = docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME)
 
@@ -65,14 +67,14 @@ dependencies: ## Start all dependencies recursively with cycle detection and cha
 					echo "${YELLOW}DEBUG: Skipping already processed dependency: $$dep${NC}"; \
 					continue; \
 				fi; \
-				if [ "$$dep" = "$(PROJECT_NAME)" ]; then \
-					echo "${RED}Error: Project $(PROJECT_NAME) cannot depend on itself.${NC}"; \
-					exit 1; \
-				fi; \
 				dep_dir=$$(find .. -type f -name ".env" -exec grep -l "PROJECT_NAME=$$dep" {} + | xargs dirname | head -n 1); \
 				if [ -z "$$dep_dir" ]; then \
 					echo "${RED}Error: Could not find directory for dependency: $$dep${NC}"; \
 					exit 1; \
+				fi; \
+				dep_compose_file=$$(grep "^COMPOSE_FILE=" $$dep_dir/.env | cut -d'=' -f2); \
+				if [ -z "$$dep_compose_file" ]; then \
+					dep_compose_file="$$dep_dir/docker-compose.yml"; \
 				fi; \
 				echo "${GREEN}DEBUG: Dependency chain: $$chain -> $$dep${NC}"; \
 				dep_env=$$(cat $$dep_dir/.env | grep "^DEPENDENCIES=" | cut -d'=' -f2); \
@@ -80,7 +82,7 @@ dependencies: ## Start all dependencies recursively with cycle detection and cha
 					start_deps "$$dep_env" "$$visited $$dep" "$$chain -> $$dep"; \
 				fi; \
 				echo "${GREEN}DEBUG: Starting dependency: $$dep in directory: $$dep_dir...${NC}"; \
-				$(MAKE) -C $$dep_dir DEPENDENCIES= up || exit 1; \
+				$(MAKE) -C $$dep_dir DEPENDENCIES= COMPOSE_FILE=$$dep_compose_file PROJECT_NAME=$$dep up || exit 1; \
 				visited="$$visited $$dep"; \
 			done; \
 		}; \
