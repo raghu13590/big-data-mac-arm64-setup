@@ -137,10 +137,14 @@ health-service: ## Check the health status of a single service: make health-serv
 	@if [ -z "$(SERVICE)" ]; then \
 		echo "SERVICE variable not set. Usage: make health-service SERVICE=servicename"; \
 		exit 1; \
-	elif ! service_id=$$($(DOCKER_COMPOSE) ps -q $(SERVICE)); then \
-		echo "Service $(SERVICE) not found."; \
-		exit 1; \
-	elif [ -z "$$service_id" ]; then \
+	fi; \
+	echo "Waiting for container $(SERVICE) to start..."; \
+	for i in $$(seq 1 10); do \
+		service_id=$$($(DOCKER_COMPOSE) ps -q $(SERVICE)); \
+		if [ -n "$$service_id" ]; then break; fi; \
+		sleep 5; \
+	done; \
+	if [ -z "$$service_id" ]; then \
 		echo "Service $(SERVICE) is not running."; \
 		exit 1; \
 	else \
