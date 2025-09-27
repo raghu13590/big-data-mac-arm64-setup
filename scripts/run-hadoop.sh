@@ -28,7 +28,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common-functions.sh"
 
 # Define the path to the Docker Compose file
-HADOOP_COMPOSE_FILE="$SCRIPT_DIR/../apps/hadoop/docker-compose-hadoop.yml"
+HADOOP_COMPOSE_FILE="$SCRIPT_DIR/../apps/hadoop/docker-compose.yml"
 DOCKERFILE_DIR="$SCRIPT_DIR/../apps/hadoop"
 ZOOKEEPER_HADOOP_COMPOSE_FILE="$SCRIPT_DIR/../apps/zookeeper/docker-compose-zookeeper.yml"
 APP_DATA_DIR="$SCRIPT_DIR/../app-data"

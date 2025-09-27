@@ -67,16 +67,27 @@ dependencies: ## Start all dependencies in the correct order
 		"$(SCRIPTS_DIR)/resolve-deps.sh" "$(PROJECT_NAME)"; \
 	fi
 
-up: dependencies up-minimal ## Start all services, including dependencies
+up: ## Start all services, including dependencies
+	@$(MAKE) dependencies
+	@$(MAKE) up-minimal
 
 up-minimal: ## Start services for this project only
-	@echo "$(GREEN)Starting services for $(PROJECT_NAME)...$(NC)"
+	@echo "$(GREEN)\nStarting services for $(PROJECT_NAME)...$(NC)"
 	@$(MAKE) init
 	$(DOCKER_COMPOSE) up -d
 	@echo "$(GREEN)Waiting for services to be healthy...$(NC)"
 	@sleep 30
 	@$(MAKE) health
 	@echo "$(GREEN)Services for $(PROJECT_NAME) are up and healthy!$(NC)"
+
+up-service: ## Start a single service by name: make up-service SERVICE=servicename
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "$(RED)SERVICE variable not set. Usage: make up-service SERVICE=servicename$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)Starting service: $(SERVICE) for $(PROJECT_NAME)...$(NC)"
+	$(DOCKER_COMPOSE) up -d $(SERVICE)
+	@sleep 10
 
 init: ## Initialize service-specific resources (override in service Makefile if needed)
 	@: # No-op
@@ -120,3 +131,45 @@ health: ## Check the health status of all components
 		fi; \
 	done
 	@echo "$(GREEN)All components are healthy!$(NC)"
+
+health-service: ## Check the health status of a single service: make health-service SERVICE=servicename
+	@echo "Checking health for service: $(SERVICE)"
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "SERVICE variable not set. Usage: make health-service SERVICE=servicename"; \
+		exit 1; \
+	elif ! service_id=$$($(DOCKER_COMPOSE) ps -q $(SERVICE)); then \
+		echo "Service $(SERVICE) not found."; \
+		exit 1; \
+	elif [ -z "$$service_id" ]; then \
+		echo "Service $(SERVICE) is not running."; \
+		exit 1; \
+	else \
+		echo "Inspecting health status for $(SERVICE)..."; \
+		health_status=$$(docker inspect --format='{{.State.Health.Status}}' $$service_id 2>/dev/null); \
+		echo "Health status: $$health_status"; \
+		echo "$$health_status"; \
+	fi; \
+	exit 0
+
+health-service-retry:
+	@attempts=0; \
+	while [ $$attempts -lt 10 ]; do \
+		status=$$($(MAKE) --no-print-directory health-service SERVICE=$(SERVICE) | tail -n 1); \
+		echo "Result from health-service: $$status"; \
+		if [ "$$status" = "healthy" ]; then \
+			echo "Service $(SERVICE) is healthy."; \
+			exit 0; \
+		elif [ "$$status" = "unhealthy" ]; then \
+			echo "Service $(SERVICE) is unhealthy. Exiting."; \
+			exit 1; \
+		elif [ "$$status" = "starting" ]; then \
+			echo "Service $(SERVICE) is starting. Attempt $$((attempts+1))/10. Retrying in 15 seconds..."; \
+			sleep 15; \
+		else \
+			echo "Unknown health status: $$status. Exiting."; \
+			exit 1; \
+		fi; \
+		attempts=$$((attempts+1)); \
+	done; \
+	echo "Service $(SERVICE) failed to become healthy after 10 attempts."; \
+	exit 1
