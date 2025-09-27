@@ -94,9 +94,9 @@ up-reset: ## Perform a full clean install and start Hadoop services
 	@$(MAKE) health-service-retry SERVICE=nodemanager2
 	@$(MAKE) up-service SERVICE=postgres
 	@$(MAKE) health-service-retry SERVICE=postgres
+	@$(MAKE) reset-metastore
 	@$(MAKE) up-service SERVICE=metastore
 	@$(MAKE) health-service-retry SERVICE=metastore
-	@$(MAKE) reset-metastore
 	@$(MAKE) up-service SERVICE=hiveserver2
 	@$(MAKE) health-service-retry SERVICE=hiveserver2
 	@$(MAKE) test
