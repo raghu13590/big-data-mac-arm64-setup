@@ -9,10 +9,6 @@ APP_DATA_DIR := $(abspath $(CURDIR)/../../app-data/hadoop)
 DOCKER_COMPOSE_HADOOP := docker-compose -f $(CURDIR)/docker-compose.yml -p $(PROJECT_NAME)
 SERVICES := namenode datanode1 datanode2 resourcemanager nodemanager1 nodemanager2 postgres metastore hiveserver2
 
-build-hadoop:
-	@echo "$(GREEN)Building Hadoop image...$(NC)"
-	docker build -t hadoop:3.3.6 $(HADOOP_DOCKERFILE_DIR)
-
 format-namenode:
 	@echo "$(GREEN)Formatting Hadoop NameNode...$(NC)"
 	$(DOCKER_COMPOSE_HADOOP) run --rm namenode hdfs namenode -format -force
@@ -49,7 +45,7 @@ reset-metastore:
 	fi
 
 test:
-	@$(CURDIR)/../../scripts/tests/test-hadoop.sh
+	@$(CURDIR)/tests.sh
 
 up: ## Start Hadoop services (normal flow, no reset)
 	@$(MAKE) dependencies
@@ -76,7 +72,7 @@ up: ## Start Hadoop services (normal flow, no reset)
 
 up-reset: ## Perform a full clean install and start Hadoop services
 	@$(MAKE) dependencies
-	@$(MAKE) build-hadoop
+	@$(MAKE) build
 	@$(MAKE) clean-hadoop
 	@$(MAKE) format-namenode
 	@$(MAKE) up-service SERVICE=namenode
