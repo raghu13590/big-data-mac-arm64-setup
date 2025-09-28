@@ -1,14 +1,18 @@
+x-hadoop-build: &hadoop-build
+  build:
+    context: .
+
 services:
   namenode:
-    image: hadoop:3.3.6
-    container_name: namenode
-    hostname: namenode
+    <<: *hadoop-build
+    container_name: ${NAMENODE}
+    hostname: ${NAMENODE}
     ports:
       - "9870:9870"
     volumes:
-      - ../../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-      - ../../app-data/hadoop/namenode:/hadoop/dfs/name
-      - ../../app-data/hadoop/datasets:/datasets
+      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
+      - ${APP_DATA_DIR}/${NAMENODE}:/hadoop/dfs/name
+      - ${APP_DATA_DIR}/datasets:/datasets
     command: namenode
     networks:
       - big-data-network
@@ -19,15 +23,17 @@ services:
       retries: 3
 
   datanode1:
-    image: hadoop:3.3.6
-    container_name: datanode1
-    hostname: datanode1
+    <<: *hadoop-build
+    container_name: ${DATANODE1}
+    hostname: ${DATANODE1}
+    ports:
+      - "9864:9864"
     depends_on:
       - namenode
     volumes:
-      - ../../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-      - ../../app-data/hadoop/datanode1:/hadoop/dfs/data
-      - ../../app-data/hadoop/datasets:/datasets
+      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
+      - ${APP_DATA_DIR}/${DATANODE1}:/hadoop/dfs/data
+      - ${APP_DATA_DIR}/datasets:/datasets
     command: datanode
     networks:
       - big-data-network
@@ -38,15 +44,17 @@ services:
       retries: 3
 
   datanode2:
-    image: hadoop:3.3.6
-    container_name: datanode2
-    hostname: datanode2
+    <<: *hadoop-build
+    container_name: ${DATANODE2}
+    hostname: ${DATANODE2}
+    ports:
+      - "9865:9864"
     depends_on:
       - namenode
     volumes:
-      - ../../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-      - ../../app-data/hadoop/datanode2:/hadoop/dfs/data
-      - ../../app-data/hadoop/datasets:/datasets
+      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
+      - ${APP_DATA_DIR}/${DATANODE2}:/hadoop/dfs/data
+      - ${APP_DATA_DIR}/datasets:/datasets
     command: datanode
     networks:
       - big-data-network
@@ -57,15 +65,15 @@ services:
       retries: 3
 
   resourcemanager:
-    image: hadoop:3.3.6
-    container_name: resourcemanager
-    hostname: resourcemanager
+    <<: *hadoop-build
+    container_name: ${RESOURCEMANAGER}
+    hostname: ${RESOURCEMANAGER}
     depends_on:
       - namenode
     ports:
       - "8088:8088"
     volumes:
-      - ../../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
+      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
     command: resourcemanager
     networks:
       - big-data-network
@@ -76,15 +84,15 @@ services:
       retries: 3
 
   nodemanager1:
-    image: hadoop:3.3.6
-    container_name: nodemanager1
-    hostname: nodemanager1
+    <<: *hadoop-build
+    container_name: ${NODEMANAGER1}
+    hostname: ${NODEMANAGER1}
     depends_on:
       - resourcemanager
     ports:
       - "8042:8042"
     volumes:
-      - ../../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
+      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
     command: nodemanager
     networks:
       - big-data-network
@@ -95,15 +103,15 @@ services:
       retries: 3
 
   nodemanager2:
-    image: hadoop:3.3.6
-    container_name: nodemanager2
-    hostname: nodemanager2
+    <<: *hadoop-build
+    container_name: ${NODEMANAGER2}
+    hostname: ${NODEMANAGER2}
     depends_on:
       - resourcemanager
     ports:
       - "8043:8042"
     volumes:
-      - ../../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
+      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
     command: nodemanager
     networks:
       - big-data-network
@@ -115,14 +123,14 @@ services:
 
   postgres:
     image: postgres:13
-    container_name: postgres
-    hostname: postgres
+    container_name: ${POSTGRES}
+    hostname: ${POSTGRES}
     environment:
       POSTGRES_DB: metastore
       POSTGRES_USER: hive
       POSTGRES_PASSWORD: hive
     volumes:
-      - ../../app-data/hadoop/postgres:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/postgres:/var/lib/postgresql/data
     networks:
       - big-data-network
     healthcheck:
@@ -132,15 +140,15 @@ services:
       retries: 5
 
   metastore:
-    image: hadoop:3.3.6
-    container_name: metastore
-    hostname: metastore
+    <<: *hadoop-build
+    container_name: ${METASTORE}
+    hostname: ${METASTORE}
     depends_on:
       - postgres
     volumes:
-      - ../../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-      - ../../configs/hadoop/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
-      - ../../app-data/hadoop/metastore:/opt/hive-4.0.1/metastore_db
+      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
+      - ${CONFIG_HADOOP_DIR}/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
+      - ${APP_DATA_DIR}/metastore:/opt/hive-4.0.1/metastore_db
     command: metastore
     networks:
       - big-data-network
@@ -151,15 +159,15 @@ services:
       retries: 3
 
   hiveserver2:
-    image: hadoop:3.3.6
-    container_name: hiveserver2
-    hostname: hiveserver2
+    <<: *hadoop-build
+    container_name: ${HIVESERVER2}
+    hostname: ${HIVESERVER2}
     depends_on:
       - metastore
     volumes:
-      - ../../configs/hadoop:/opt/hadoop-3.3.6/etc/hadoop
-      - ../../configs/hadoop/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
-      - ../../app-data/hadoop/datasets:/datasets
+      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
+      - ${CONFIG_HADOOP_DIR}/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
+      - ${APP_DATA_DIR}/datasets:/datasets
     ports:
       - "10000:10000"
     command: hiveserver2
