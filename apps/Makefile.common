@@ -89,6 +89,11 @@ up-service: ## Start a single service by name: make up-service SERVICE=servicena
 	$(DOCKER_COMPOSE) up -d $(SERVICE)
 	@sleep 10
 
+up-service-health: ## Start a single service and wait for it to be healthy: make up-service-health SERVICE=servicename
+	@$(MAKE) up-service SERVICE=$(SERVICE)
+	@sleep 30
+	@$(MAKE) health-service-retry SERVICE=$(SERVICE)
+
 init: ## Initialize service-specific resources (override in service Makefile if needed)
 	@: # No-op
 
@@ -120,7 +125,7 @@ ps: status ## Alias for status
 
 health: ## Check the health status of all components
 	@echo "$(GREEN)Checking health status for $(PROJECT_NAME)...$(NC)"
-	@services=$$($(DOCKER_COMPOSE) ps --services); \
+	@services=$$($(DOCKER_COMPOSE) config --services); \
 	for service in $$services; do \
 		health_status=$$(docker inspect --format='{{.State.Health.Status}}' $$($(DOCKER_COMPOSE) ps -q $$service) 2>/dev/null); \
 		if [ "$$health_status" = "unhealthy" ]; then \
@@ -157,9 +162,8 @@ health-service: ## Check the health status of a single service: make health-serv
 
 health-service-retry:
 	@attempts=0; \
-	while [ $$attempts -lt 10 ]; do \
+	while [ $$attempts -lt 30 ]; do \
 		status=$$($(MAKE) --no-print-directory health-service SERVICE=$(SERVICE) | tail -n 1); \
-		echo "Result from health-service: $$status"; \
 		if [ "$$status" = "healthy" ]; then \
 			echo "Service $(SERVICE) is healthy."; \
 			exit 0; \
@@ -167,13 +171,12 @@ health-service-retry:
 			echo "Service $(SERVICE) is unhealthy. Exiting."; \
 			exit 1; \
 		elif [ "$$status" = "starting" ]; then \
-			echo "Service $(SERVICE) is starting. Attempt $$((attempts+1))/10. Retrying in 15 seconds..."; \
-			sleep 15; \
+			sleep 10; \
 		else \
 			echo "Unknown health status: $$status. Exiting."; \
 			exit 1; \
 		fi; \
 		attempts=$$((attempts+1)); \
 	done; \
-	echo "Service $(SERVICE) failed to become healthy after 10 attempts."; \
+	echo "Service $(SERVICE) failed to become healthy after 5 minutes."; \
 	exit 1
