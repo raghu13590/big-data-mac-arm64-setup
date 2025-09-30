@@ -1,8 +1,15 @@
 #!/bin/bash
 
+# Source environment variables from .env if present
+if [ -f "/opt/flink/.env" ]; then
+    set -a
+    source /opt/flink/.env
+    set +a
+fi
+
 # Enable remote debugging if specified
 if [ "$ENABLE_DEBUG" = "true" ]; then
-    export JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+    export JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:${DEBUG_PORT}"
 fi
 
 # Print environment variables for debugging
@@ -15,8 +22,6 @@ echo "PATH: $PATH"
 echo "JAVA_OPTS: $JAVA_OPTS"
 
 # Update PATH to include Flink and Hadoop binaries
-export HADOOP_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
-export YARN_CONF_DIR=/opt/hadoop-3.3.6/etc/hadoop
 export PATH=$PATH:$HADOOP_HOME/bin:$FLINK_HOME/bin
 
 # List Flink binaries and check paths
@@ -30,12 +35,12 @@ if [ -f "$FLINK_HOME/conf/flink-env.sh" ]; then
 fi
 
 # Copy Flink libraries to HDFS
-hadoop fs -mkdir -p /flink/lib
-hadoop fs -put /opt/flink/lib/* /flink/lib/
+hadoop fs -mkdir -p $FLINK_HDFS_LIB_PATH
+hadoop fs -put $FLINK_HOME/lib/* $FLINK_HDFS_LIB_PATH/
 
 # Add to entrypoint.sh before starting Flink
-chown -R hadoop:hadoop /opt/flink/log
-chmod -R 755 /opt/flink/log
+chown -R $HADOOP_USER_NAME:$HADOOP_USER_NAME $FLINK_HOME/log
+chmod -R 755 $FLINK_HOME/log
 
 # Execute the command passed to the container
 exec "$@"
