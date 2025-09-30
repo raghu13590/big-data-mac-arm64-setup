@@ -6,8 +6,9 @@ FROM ubuntu:focal AS builder
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Set non-interactive frontend and preconfigure tzdata for non-interactive install
+ARG TZ
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=UTC
+ENV TZ=${TZ}
 
 # Disable suggests/recommends to reduce image size and ensure non-interactive installation
 RUN echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/10disableextras && \
@@ -27,10 +28,12 @@ RUN echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/10disableextras &&
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Set locale
-RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
-    locale-gen en_US.UTF-8
-ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
-ENV PYTHONIOENCODING=utf-8
+ARG LANG
+ARG LANGUAGE
+ARG LC_ALL
+ENV LANG=${LANG} LANGUAGE=${LANGUAGE} LC_ALL=${LC_ALL}
+ARG PYTHONIOENCODING
+ENV PYTHONIOENCODING=${PYTHONIOENCODING}
 
 # Install ISA-L from source and clean up after building to reduce image size
 RUN git clone https://github.com/intel/isa-l.git /isa-l-src && \
@@ -43,11 +46,20 @@ RUN git clone https://github.com/intel/isa-l.git /isa-l-src && \
     rm -rf /isa-l-src
 
 # Set environment variables required to build Hadoop
-ENV MAVEN_HOME=/usr/share/maven
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-arm64
-ENV MAVEN_OPTS="-Xms512m -Xmx8192m"
-ENV HADOOP_VERSION=3.3.6
-ENV HIVE_VERSION=4.0.1
+ARG MAVEN_HOME
+ARG JAVA_HOME
+ARG MAVEN_OPTS
+ARG HADOOP_VERSION
+ARG HIVE_VERSION
+ARG POSTGRES_JDBC_VERSION
+ARG HADOOP_USER
+ARG HIVE_USER
+ARG SUPERGROUP
+ENV MAVEN_HOME=${MAVEN_HOME}
+ENV JAVA_HOME=${JAVA_HOME}
+ENV MAVEN_OPTS=${MAVEN_OPTS}
+ENV HADOOP_VERSION=${HADOOP_VERSION}
+ENV HIVE_VERSION=${HIVE_VERSION}
 
 # Build Hadoop from source and clean up unnecessary files
 RUN git clone --branch rel/release-$HADOOP_VERSION --depth 1 https://github.com/apache/hadoop.git /hadoop-src && \
@@ -67,7 +79,7 @@ RUN wget https://downloads.apache.org/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_
     tar -xzf apache-hive-$HIVE_VERSION-bin.tar.gz && \
     mv apache-hive-$HIVE_VERSION-bin /opt/hive-$HIVE_VERSION && \
     rm -f apache-hive-$HIVE_VERSION-bin.tar.gz && \
-    wget https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -O /opt/hive-$HIVE_VERSION/lib/postgresql-jdbc.jar
+    wget https://jdbc.postgresql.org/download/postgresql-${POSTGRES_JDBC_VERSION}.jar -O /opt/hive-$HIVE_VERSION/lib/postgresql-jdbc.jar
 
 # Set environment variables
 ENV HADOOP_HOME=/opt/hadoop-$HADOOP_VERSION
@@ -75,21 +87,21 @@ ENV HIVE_HOME=/opt/hive-$HIVE_VERSION
 ENV PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$HIVE_HOME/bin:/usr/bin
 
 # Create non-root users and configure permissions
-RUN useradd -ms /bin/bash hadoop && \
-    useradd -ms /bin/bash hive && \
+RUN useradd -ms /bin/bash ${HADOOP_USER} && \
+    useradd -ms /bin/bash ${HIVE_USER} && \
     mkdir -p $HADOOP_HOME/logs && \
-    chown -R hadoop:hadoop $HADOOP_HOME/logs && \
-    groupadd supergroup && \
-    usermod -aG supergroup hadoop && \
-    usermod -aG supergroup hive
+    chown -R ${HADOOP_USER}:${HADOOP_USER} $HADOOP_HOME/logs && \
+    groupadd ${SUPERGROUP} && \
+    usermod -aG ${SUPERGROUP} ${HADOOP_USER} && \
+    usermod -aG ${SUPERGROUP} ${HIVE_USER}
 
 # Copy the entrypoint script and ensure correct permissions
-COPY --chown=hadoop:hadoop entrypoint.sh /entrypoint.sh
+COPY --chown=${HADOOP_USER}:${HADOOP_USER} entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Switch to 'hadoop' user
-USER hadoop
-WORKDIR /home/hadoop
+USER ${HADOOP_USER}
+WORKDIR /home/${HADOOP_USER}
 
 # Set the entrypoint and default command
 ENTRYPOINT ["/entrypoint.sh"]

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check that required environment variables are set
+if [[ -z "$HDFS_WAREHOUSE_DIR" || -z "$HDFS_STAGING_DIR" || -z "$HDFS_OWNER" || -z "$HDFS_PERMISSIONS" ]]; then
+    echo "Error: One or more required environment variables (HDFS_WAREHOUSE_DIR, HDFS_STAGING_DIR, HDFS_OWNER, HDFS_PERMISSIONS) are not set."
+    exit 1
+fi
+
 # Function to initialize HDFS directories and set permissions
 initialize_hdfs_directories() {
     # Wait for HDFS to be ready (Namenode and Datanode must be started)
@@ -8,25 +14,25 @@ initialize_hdfs_directories() {
         sleep 5
     done
 
-   # Create /user/hive/warehouse directory if it does not exist
-       if ! hdfs dfs -test -d /user/hive/warehouse; then
-           echo "Creating /user/hive/warehouse directory in HDFS..."
-           hdfs dfs -mkdir -p /user/hive/warehouse
-           hdfs dfs -chmod -R 777 /user/hive/warehouse
-           hdfs dfs -chown -R hive:hadoop /user/hive/warehouse
-       else
-           echo "/user/hive/warehouse directory already exists"
-       fi
+    # Create warehouse directory if it does not exist
+    if ! hdfs dfs -test -d "$HDFS_WAREHOUSE_DIR"; then
+        echo "Creating $HDFS_WAREHOUSE_DIR directory in HDFS..."
+        hdfs dfs -mkdir -p "$HDFS_WAREHOUSE_DIR"
+        hdfs dfs -chmod -R "$HDFS_PERMISSIONS" "$HDFS_WAREHOUSE_DIR"
+        hdfs dfs -chown -R "$HDFS_OWNER" "$HDFS_WAREHOUSE_DIR"
+    else
+        echo "$HDFS_WAREHOUSE_DIR directory already exists"
+    fi
 
-   # Create /tmp/hadoop-yarn/staging directory if it does not exist
-       if ! hdfs dfs -test -d /tmp/hadoop-yarn/staging; then
-           echo "Creating /tmp/hadoop-yarn/staging directory in HDFS..."
-           hdfs dfs -mkdir -p /tmp/hadoop-yarn/staging
-           hdfs dfs -chmod -R 777 /tmp/hadoop-yarn/staging
-           hdfs dfs -chown -R hive:hadoop /tmp/hadoop-yarn/staging
-       else
-           echo "/tmp/hadoop-yarn/staging directory already exists"
-       fi
+    # Create staging directory if it does not exist
+    if ! hdfs dfs -test -d "$HDFS_STAGING_DIR"; then
+        echo "Creating $HDFS_STAGING_DIR directory in HDFS..."
+        hdfs dfs -mkdir -p "$HDFS_STAGING_DIR"
+        hdfs dfs -chmod -R "$HDFS_PERMISSIONS" "$HDFS_STAGING_DIR"
+        hdfs dfs -chown -R "$HDFS_OWNER" "$HDFS_STAGING_DIR"
+    else
+        echo "$HDFS_STAGING_DIR directory already exists"
+    fi
 }
 
 # Function to initialize Hive schema
