@@ -9,8 +9,10 @@ SAMPLE_MESSAGE_FILE := $(SAMPLE_MESSAGE_DIR)/samplemessage.txt
 .PHONY: create-sample-message
 
 up:
-	$(MAKE) -f ../Makefile.common up
-	$(MAKE) create-sample-message
+	@$(MAKE) dependencies
+	@$(MAKE) build
+	@$(MAKE) up-service-health SERVICE=kafkaproducer
+	@$(MAKE) create-sample-message
 
 create-sample-message:
 	mkdir -p $(SAMPLE_MESSAGE_DIR)
