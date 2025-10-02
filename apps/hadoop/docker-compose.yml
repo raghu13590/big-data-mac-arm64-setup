@@ -22,6 +22,11 @@ x-hadoop-build: &hadoop-build
     HDFS_OWNER: ${HDFS_OWNER}
     HDFS_PERMISSIONS: ${HDFS_PERMISSIONS}
 
+x-healthcheck-default: &healthcheck-default
+  interval: ${HEALTHCHECK_INTERVAL}
+  timeout: ${HEALTHCHECK_INTERVAL}
+  retries: ${HEALTHCHECK_RETRIES}
+
 services:
   namenode:
     <<: *hadoop-build
@@ -30,17 +35,15 @@ services:
     ports:
       - "9870:9870"
     volumes:
-      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
-      - ${APP_DATA_DIR}/${NAMENODE}:/hadoop/dfs/name
-      - ${APP_DATA_DIR}/datasets:/datasets
+      - ${CONFIGS_DIR}/${PROJECT_NAME}:${HADOOP_CONF_DIR}
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/${NAMENODE}:/hadoop/dfs/name
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/datasets:/datasets
     command: namenode
     networks:
       - big-data-network
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD", "bash", "-c", "nc -zv namenode 9000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   datanode1:
     <<: *hadoop-build
@@ -51,17 +54,15 @@ services:
     depends_on:
       - namenode
     volumes:
-      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
-      - ${APP_DATA_DIR}/${DATANODE1}:/hadoop/dfs/data
-      - ${APP_DATA_DIR}/datasets:/datasets
+      - ${CONFIGS_DIR}/${PROJECT_NAME}:${HADOOP_CONF_DIR}
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/${DATANODE1}:/hadoop/dfs/data
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/datasets:/datasets
     command: datanode
     networks:
       - big-data-network
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD", "curl", "-f", "http://localhost:9864"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   datanode2:
     <<: *hadoop-build
@@ -72,17 +73,15 @@ services:
     depends_on:
       - namenode
     volumes:
-      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
-      - ${APP_DATA_DIR}/${DATANODE2}:/hadoop/dfs/data
-      - ${APP_DATA_DIR}/datasets:/datasets
+      - ${CONFIGS_DIR}/${PROJECT_NAME}:${HADOOP_CONF_DIR}
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/${DATANODE2}:/hadoop/dfs/data
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/datasets:/datasets
     command: datanode
     networks:
       - big-data-network
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD", "curl", "-f", "http://localhost:9864"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   resourcemanager:
     <<: *hadoop-build
@@ -93,15 +92,13 @@ services:
     ports:
       - "8088:8088"
     volumes:
-      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
+      - ${CONFIGS_DIR}/${PROJECT_NAME}:${HADOOP_CONF_DIR}
     command: resourcemanager
     networks:
       - big-data-network
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD", "curl", "-f", "http://resourcemanager:8088/isActive"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   nodemanager1:
     <<: *hadoop-build
@@ -112,15 +109,13 @@ services:
     ports:
       - "8042:8042"
     volumes:
-      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
+      - ${CONFIGS_DIR}/${PROJECT_NAME}:${HADOOP_CONF_DIR}
     command: nodemanager
     networks:
       - big-data-network
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD", "curl", "-f", "http://localhost:8042"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   nodemanager2:
     <<: *hadoop-build
@@ -131,15 +126,13 @@ services:
     ports:
       - "8043:8042"
     volumes:
-      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
+      - ${CONFIGS_DIR}/${PROJECT_NAME}:${HADOOP_CONF_DIR}
     command: nodemanager
     networks:
       - big-data-network
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD", "curl", "-f", "http://localhost:8042"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   postgres:
     image: postgres:13
@@ -150,7 +143,7 @@ services:
       POSTGRES_USER: hive
       POSTGRES_PASSWORD: hive
     volumes:
-      - ${APP_DATA_DIR}/postgres:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/postgres:/var/lib/postgresql/data
     networks:
       - big-data-network
     healthcheck:
@@ -166,17 +159,15 @@ services:
     depends_on:
       - postgres
     volumes:
-      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
-      - ${CONFIG_HADOOP_DIR}/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
-      - ${APP_DATA_DIR}/metastore:/opt/hive-4.0.1/metastore_db
+      - ${CONFIGS_DIR}/${PROJECT_NAME}:${HADOOP_CONF_DIR}
+      - ${CONFIGS_DIR}/${PROJECT_NAME}/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/metastore:/opt/hive-4.0.1/metastore_db
     command: metastore
     networks:
       - big-data-network
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD", "bash", "-c", "nc -zv localhost 9083"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   hiveserver2:
     <<: *hadoop-build
@@ -185,19 +176,17 @@ services:
     depends_on:
       - metastore
     volumes:
-      - ${CONFIG_HADOOP_DIR}:/opt/hadoop-3.3.6/etc/hadoop
-      - ${CONFIG_HADOOP_DIR}/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
-      - ${APP_DATA_DIR}/datasets:/datasets
+      - ${CONFIGS_DIR}/${PROJECT_NAME}:${HADOOP_CONF_DIR}
+      - ${CONFIGS_DIR}/${PROJECT_NAME}/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/datasets:/datasets
     ports:
       - "10000:10000"
     command: hiveserver2
     networks:
       - big-data-network
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD", "bash", "-c", "nc -zv localhost 10000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 networks:
   big-data-network:

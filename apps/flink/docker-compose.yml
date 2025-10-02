@@ -1,28 +1,32 @@
 x-flink-build: &flink-build
   build:
     context: .
+
+x-healthcheck-default: &healthcheck-default
+  interval: ${HEALTHCHECK_INTERVAL}
+  timeout: ${HEALTHCHECK_INTERVAL}
+  retries: ${HEALTHCHECK_RETRIES}
+
 services:
   jobmanager:
     <<: *flink-build
     container_name: flink-jobmanager
     ports:
       - "${FLINK_JOBMANAGER_PORT}:${FLINK_JOBMANAGER_PORT}"
-    environment:
-      - FLINK_PROPERTIES=jobmanager.rpc.address:jobmanager
-      - HADOOP_HOME=${FLINK_HADOOP_HOME}
-      - HADOOP_CONF_DIR=${FLINK_HADOOP_CONF_DIR}
-    command: ${FLINK_HOME}/bin/jobmanager.sh start-foreground
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD-SHELL", "curl -f ${FLINK_JOBMANAGER_HEALTHCHECK_URL} || exit 1"]
-      interval: ${HEALTHCHECK_INTERVAL}
-      timeout: ${HEALTHCHECK_INTERVAL}
-      retries: ${HEALTHCHECK_RETRIES}
     volumes:
       - flink_jobmanager_data:${FLINK_HOME}
-      - ../../configs/flink/flink-conf.yaml:${FLINK_HOME}/conf/flink-conf.yaml
-      - ../../configs/hadoop:${FLINK_HADOOP_CONF_DIR}
-      - ../../app-data/flink/data:${FLINK_HOME}/data
-      - ../../app-data/flink/jars:${FLINK_HOME}/jars
+      - ${CONFIGS_DIR}/${PROJECT_NAME}/flink-conf.yaml:${FLINK_HOME}/conf/flink-conf.yaml
+      - ${CONFIGS_DIR}/hadoop:${HADOOP_CONF_DIR}
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/data:${FLINK_HOME}/data
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/jars:${FLINK_HOME}/jars
+    environment:
+      - FLINK_PROPERTIES=jobmanager.rpc.address:jobmanager
+      - HADOOP_HOME=${HADOOP_HOME}
+      - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
+    command: ${FLINK_HOME}/bin/jobmanager.sh start-foreground
     networks:
       - ${FLINK_NETWORK}
 
@@ -31,22 +35,20 @@ services:
     container_name: flink-taskmanager
     depends_on:
       - jobmanager
-    environment:
-      - FLINK_PROPERTIES=taskmanager.rpc.address:taskmanager
-      - HADOOP_HOME=${FLINK_HADOOP_HOME}
-      - HADOOP_CONF_DIR=${FLINK_HADOOP_CONF_DIR}
-    command: ${FLINK_HOME}/bin/taskmanager.sh start-foreground
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD-SHELL", "curl -sf ${FLINK_TASKMANAGER_HEALTHCHECK_URL} | grep 'taskmanagers' || exit 1"]
-      interval: ${HEALTHCHECK_INTERVAL}
-      timeout: ${HEALTHCHECK_INTERVAL}
-      retries: ${HEALTHCHECK_RETRIES}
     volumes:
       - flink_taskmanager_data:${FLINK_HOME}
-      - ../../configs/flink/flink-conf.yaml:${FLINK_HOME}/conf/flink-conf.yaml
-      - ../../configs/hadoop:${FLINK_HADOOP_CONF_DIR}
-      - ../../app-data/flink/data:${FLINK_HOME}/data
-      - ../../app-data/flink/jars:${FLINK_HOME}/jars
+      - ${CONFIGS_DIR}/${PROJECT_NAME}/flink-conf.yaml:${FLINK_HOME}/conf/flink-conf.yaml
+      - ${CONFIGS_DIR}/hadoop:${HADOOP_CONF_DIR}
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/data:${FLINK_HOME}/data
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/jars:${FLINK_HOME}/jars
+    environment:
+      - FLINK_PROPERTIES=taskmanager.rpc.address:taskmanager
+      - HADOOP_HOME=${HADOOP_HOME}
+      - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
+    command: ${FLINK_HOME}/bin/taskmanager.sh start-foreground
     networks:
       - ${FLINK_NETWORK}
 
