@@ -1,3 +1,8 @@
+x-healthcheck-default: &healthcheck-default
+  interval: ${HEALTHCHECK_INTERVAL}
+  timeout: ${HEALTHCHECK_INTERVAL}
+  retries: ${HEALTHCHECK_RETRIES}
+
 services:
   kafka:
     image: bitnami/kafka:3.9.0
@@ -5,18 +10,12 @@ services:
     ports:
       - "9092:9092"
     env_file:
-      - .env
+      - ./${PROJECT_NAME}/.env
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
     volumes:
-      - ../../configs/kafka:/bitnami/kafka/config
-      - ../../app-data/kafka/volumes:/bitnami/kafka/data
+      - ${CONFIGS_DIR}/${PROJECT_NAME}:/bitnami/kafka/config
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/volumes:/bitnami/kafka/data
     networks:
-      - big-data-network
-
-networks:
-  big-data-network:
-    external: true
+      - ${BIG_DATA_NETWORK}

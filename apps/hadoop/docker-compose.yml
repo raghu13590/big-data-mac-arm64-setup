@@ -147,10 +147,8 @@ services:
     networks:
       - big-data-network
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD-SHELL", "pg_isready -U hive -d metastore"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
   metastore:
     <<: *hadoop-build
@@ -187,7 +185,3 @@ services:
     healthcheck:
       <<: *healthcheck-default
       test: ["CMD", "bash", "-c", "nc -zv localhost 10000"]
-
-networks:
-  big-data-network:
-    external: true
