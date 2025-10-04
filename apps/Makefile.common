@@ -42,7 +42,8 @@ endif
 ROOT_DIR := $(abspath $(CURDIR)/../..)
 SCRIPTS_DIR := $(ROOT_DIR)/apps/scripts
 COMPOSE_FILE := $(CURDIR)/docker-compose.yml
-DOCKER_COMPOSE := docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --env-file $(CURDIR)/../.env --env-file $(CURDIR)/.env
+COMMON_COMPOSE_FILE := $(CURDIR)/../docker-compose.common.yml
+DOCKER_COMPOSE := docker compose -f $(COMMON_COMPOSE_FILE) -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --env-file $(CURDIR)/../.env --env-file $(CURDIR)/.env
 
 # Default target
 all: help

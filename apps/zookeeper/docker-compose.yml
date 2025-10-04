@@ -9,14 +9,14 @@ services:
       - "3888:3888"  # Leader election port
       - "8081:8080"  # AdminServer port for Zookeeper1
     env_file:
-      - .env
+      - ./${PROJECT_NAME}/.env
     environment:
       - ZOO_SERVER_ID=1
     volumes:
-      - ../../configs/zookeeper/config/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
-      - ../../app-data/zookeeper/zookeeper1/data:/data
+      - ${CONFIGS_DIR}/${PROJECT_NAME}/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/zookeeper1/data:/data
     networks:
-      - big-data-network
+      - ${BIG_DATA_NETWORK}
 
   zookeeper2:
     image: bitnami/zookeeper:latest
@@ -28,14 +28,14 @@ services:
       - "3889:3888"  # Leader election port
       - "8082:8080"  # AdminServer port for Zookeeper2
     env_file:
-      - .env
+      - ./${PROJECT_NAME}/.env
     environment:
       - ZOO_SERVER_ID=2
     volumes:
-      - ../../configs/zookeeper/config/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
-      - ../../app-data/zookeeper/zookeeper2/data:/data
+      - ${CONFIGS_DIR}/${PROJECT_NAME}/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/zookeeper2/data:/data
     networks:
-      - big-data-network
+      - ${BIG_DATA_NETWORK}
 
   zookeeper3:
     image: bitnami/zookeeper:latest
@@ -47,15 +47,11 @@ services:
       - "3890:3888"  # Leader election port
       - "8083:8080"  # AdminServer port for Zookeeper3
     env_file:
-      - .env
+      - ./${PROJECT_NAME}/.env
     environment:
       - ZOO_SERVER_ID=3
     volumes:
-      - ../../configs/zookeeper/config/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
-      - ../../app-data/zookeeper/zookeeper3/data:/data
+      - ${CONFIGS_DIR}/${PROJECT_NAME}/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
+      - ${APP_DATA_DIR}/${PROJECT_NAME}/zookeeper3/data:/data
     networks:
-      - big-data-network
-
-networks:
-  big-data-network:
-    external: true
+      - ${BIG_DATA_NETWORK}
