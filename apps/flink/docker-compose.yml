@@ -28,7 +28,7 @@ services:
       - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
     command: ${FLINK_HOME}/bin/jobmanager.sh start-foreground
     networks:
-      - ${FLINK_NETWORK}
+      - ${BIG_DATA_NETWORK}
 
   taskmanager:
     <<: *flink-build
@@ -50,7 +50,7 @@ services:
       - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
     command: ${FLINK_HOME}/bin/taskmanager.sh start-foreground
     networks:
-      - ${FLINK_NETWORK}
+      - ${BIG_DATA_NETWORK}
 
 volumes:
   flink_jobmanager_data:
