@@ -1,23 +1,28 @@
+x-build-default: &build-default
+  build:
+    context: ${BUILD_CONTEXT}
+
 x-healthcheck-default: &healthcheck-default
   interval: ${HEALTHCHECK_INTERVAL}
-  timeout: ${HEALTHCHECK_INTERVAL}
+  timeout: ${HEALTHCHECK_TIMEOUT}
   retries: ${HEALTHCHECK_RETRIES}
 
 services:
   zoonavigator:
+    <<: *build-default
     image: elkozmon/zoonavigator:latest
     container_name: zoonavigator
     ports:
       - "2180:2180"  # Expose port 2180 on container as 2180 on the host
+    env_file:
+      - ${ENV_SERVICE_FILE}
     environment:
-      ZOOKEEPER_SERVERS: zookeeper1:2181,zookeeper2:2181,zookeeper3:2181 # Connect ZooNavigator to Zookeeper instances
-      DISABLE_AUTH: "true"  # Disable authentication for ZooNavigator (use cautiously)
-      HTTP_PORT: 2180  # Set the HTTP port for ZooNavigator UI
-    volumes:
-      - ${CONFIGS_DIR}/${PROJECT_NAME}:/app/configs
-      - ${APP_DATA_DIR}/${PROJECT_NAME}:/app/volumes
-    networks:
-      - ${BIG_DATA_NETWORK}
+      ZOOKEEPER_SERVERS: ${ZK_ADDRESS}
     healthcheck:
       <<: *healthcheck-default
-      test: ["CMD-SHELL", "curl -f http://localhost:2180 || exit 1"]  # Health check using curl
+      test: [ "CMD-SHELL", "curl -f http://localhost:2180 || exit 1" ]  # Health check using curl
+    volumes:
+      - ${CONFIGS_DIR}:/app/configs
+      - ${APP_DATA_DIR}:/app/volumes
+    networks:
+      - ${BIG_DATA_NETWORK}
