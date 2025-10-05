@@ -59,8 +59,9 @@ export BUILD_CONTEXT
 # Paths for volumes
 APP_DATA_DIR := $(ROOT_DIR)/app-data/$(SERVICE_NAME)
 CONFIGS_DIR := $(ROOT_DIR)/configs/$(SERVICE_NAME)
+ENV_SERVICE_FILE := $(abspath $(CURDIR)/.env)
 
-export APP_DATA_DIR CONFIGS_DIR SERVICE_NAME
+export APP_DATA_DIR CONFIGS_DIR SERVICE_NAME ENV_SERVICE_FILE
 
 # Default target
 all: help
