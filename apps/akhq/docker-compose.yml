@@ -1,20 +1,24 @@
+x-build-default: &build-default
+  build:
+    context: ${BUILD_CONTEXT}
+
+x-healthcheck-default: &healthcheck-default
+  interval: ${HEALTHCHECK_INTERVAL}
+  timeout: ${HEALTHCHECK_TIMEOUT}
+  retries: ${HEALTHCHECK_RETRIES}
+
 services:
   akhq:
+    <<: *build-default
     image: tchiotludo/akhq:latest
     container_name: akhq
     ports:
       - "9093:9093"  # Port for accessing AKHQ
     volumes:
-      - ../../configs/akhq/application.yml:/app/application.yml  # Mount the AKHQ configuration file
-      - ../../app-data/akhq/volumes:/app/volumes  # Mount additional volumes if needed
+      - ${CONFIGS_DIR}/application.yml:/app/application.yml  # Mount the AKHQ configuration file
+      - ${APP_DATA_DIR}:/app/volumes  # Mount additional volumes if needed
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD-SHELL", "curl -f http://localhost:9093/ || exit 1"]  # Health check to ensure AKHQ is running
-      interval: 30s  # Health check interval
-      timeout: 10s  # Health check timeout
-      retries: 5  # Health check retries
     networks:
-      - big-data-network  # Attach AKHQ to the big-data-network
-
-networks:
-  big-data-network:
-    external: true  # Ensure the network is externally managed
+      - ${BIG_DATA_NETWORK}  # Attach AKHQ to the big-data-network

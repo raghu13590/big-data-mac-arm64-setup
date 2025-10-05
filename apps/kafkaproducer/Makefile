@@ -10,9 +10,9 @@ SAMPLE_MESSAGE_FILE := $(SAMPLE_MESSAGE_DIR)/samplemessage.txt
 
 up:
 	@$(MAKE) dependencies
-	@$(MAKE) build
-	@$(MAKE) up-service-health SERVICE=kafkaproducer
+	@$(MAKE) build-quick
 	@$(MAKE) create-sample-message
+	@$(MAKE) up-service-health SERVICE=kafkaproducer
 
 create-sample-message:
 	mkdir -p $(SAMPLE_MESSAGE_DIR)

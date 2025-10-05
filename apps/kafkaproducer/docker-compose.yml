@@ -1,22 +1,22 @@
+x-build-default: &build-default
+  build:
+    context: ${BUILD_CONTEXT}
+
+x-healthcheck-default: &healthcheck-default
+  interval: ${HEALTHCHECK_INTERVAL}
+  timeout: ${HEALTHCHECK_TIMEOUT}
+  retries: ${HEALTHCHECK_RETRIES}
+
 services:
   kafkaproducer:
+    <<: *build-default
     container_name: kafkaproducer
     ports:
       - "8085:8085"
-    build:
-      context: .
-      dockerfile: Dockerfile
     volumes:
-      - ../../app-data/kafkaproducer:/app/data
-    networks:
-      - big-data-network
+      - ${APP_DATA_DIR}:/app/data
     healthcheck:
+      <<: *healthcheck-default
       test: ["CMD-SHELL", "pgrep -f 'python /app/kafkaproducer.py' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s # Add a delay before the first health check
-
-networks:
-  big-data-network:
-    external: true
+    networks:
+      - ${BIG_DATA_NETWORK}
