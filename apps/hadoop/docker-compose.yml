@@ -1,6 +1,6 @@
 x-hadoop-build: &hadoop-build
   build:
-    context: .
+    context: ${BUILD_CONTEXT}
     args:
       HADOOP_VERSION: ${HADOOP_VERSION}
       HIVE_VERSION: ${HIVE_VERSION}
@@ -24,7 +24,7 @@ x-hadoop-build: &hadoop-build
 
 x-healthcheck-default: &healthcheck-default
   interval: ${HEALTHCHECK_INTERVAL}
-  timeout: ${HEALTHCHECK_INTERVAL}
+  timeout: ${HEALTHCHECK_TIMEOUT}
   retries: ${HEALTHCHECK_RETRIES}
 
 services:

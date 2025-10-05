@@ -41,9 +41,24 @@ endif
 # Define paths and commands
 ROOT_DIR := $(abspath $(CURDIR)/../..)
 SCRIPTS_DIR := $(ROOT_DIR)/apps/scripts
-COMPOSE_FILE := $(CURDIR)/docker-compose.yml
-COMMON_COMPOSE_FILE := $(CURDIR)/../docker-compose.common.yml
-DOCKER_COMPOSE := docker compose -f $(COMMON_COMPOSE_FILE) -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --env-file $(CURDIR)/../.env --env-file $(CURDIR)/.env
+COMPOSE_FILE := $(abspath $(CURDIR)/docker-compose.yml)
+COMMON_COMPOSE_FILE := $(abspath $(CURDIR)/../docker-compose.common.yml)
+ENV_COMMON_FILE := $(abspath $(CURDIR)/../.env)
+ENV_SERVICE_FILE := $(abspath $(CURDIR)/.env)
+
+DOCKER_COMPOSE := docker compose \
+    -f $(COMMON_COMPOSE_FILE) \
+    -f $(COMPOSE_FILE) \
+    -p $(PROJECT_NAME) \
+    --env-file $(ENV_COMMON_FILE) \
+    --env-file $(ENV_SERVICE_FILE)
+
+BUILD_CONTEXT := $(abspath $(CURDIR))
+export BUILD_CONTEXT
+
+APP_DATA_DIR := $(ROOT_DIR)/app-data
+CONFIGS_DIR := $(ROOT_DIR)/configs
+export APP_DATA_DIR CONFIGS_DIR
 
 # Default target
 all: help

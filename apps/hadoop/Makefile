@@ -4,8 +4,6 @@ include ../Makefile.common
 
 .PHONY: build-hadoop format-namenode clean-hadoop reset-metastore init-metastore reset-hive-warehouse up up-reset test
 
-APP_DATA_DIR := $(abspath $(CURDIR)/../../app-data/hadoop)
-
 format-namenode:
 	@echo "$(GREEN)Formatting Hadoop NameNode...$(NC)"
 	$(DOCKER_COMPOSE) run --rm namenode hdfs namenode -format -force
@@ -15,9 +13,9 @@ clean-hadoop:
 	@$(DOCKER_COMPOSE) down -v
 	@services="$$( $(DOCKER_COMPOSE) config --services)"; \
 	for service in $$services; do \
-		echo "$(RED)Clearing $$service data...$(NC)"; \
-		if [ -d $(APP_DATA_DIR)/$$service ]; then \
-			find $(APP_DATA_DIR)/$$service -mindepth 1 -delete; \
+		echo "$(RED)Clearing $(APP_DATA_DIR)/${PROJECT_NAME}/$$service data...$(NC)"; \
+		if [ -d $(APP_DATA_DIR)/${PROJECT_NAME}/$$service ]; then \
+			find $(APP_DATA_DIR)/${PROJECT_NAME}/$$service -mindepth 1 -delete; \
 		fi; \
 	done
 
@@ -65,7 +63,7 @@ up: ## Start Hadoop services (normal flow, no reset)
 
 up-reset: ## Perform a full clean install and start Hadoop services
 	@$(MAKE) dependencies
-	@$(MAKE) build
+	@$(MAKE) build-quick
 	@$(MAKE) clean-hadoop
 	@$(MAKE) format-namenode
 	@$(MAKE) up-service-health SERVICE=namenode

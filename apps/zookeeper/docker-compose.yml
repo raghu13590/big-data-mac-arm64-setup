@@ -1,6 +1,6 @@
 services:
   zookeeper1:
-    image: bitnami/zookeeper:latest
+    image: zookeeper:3.8.4
     container_name: zookeeper1
     hostname: zookeeper1
     ports:
@@ -8,8 +8,6 @@ services:
       - "2888:2888"  # Follower port for peer communication
       - "3888:3888"  # Leader election port
       - "8081:8080"  # AdminServer port for Zookeeper1
-    env_file:
-      - ./${PROJECT_NAME}/.env
     environment:
       - ZOO_SERVER_ID=1
     volumes:
@@ -19,7 +17,7 @@ services:
       - ${BIG_DATA_NETWORK}
 
   zookeeper2:
-    image: bitnami/zookeeper:latest
+    image: zookeeper:3.8.4
     container_name: zookeeper2
     hostname: zookeeper2
     ports:
@@ -27,8 +25,6 @@ services:
       - "2889:2888"  # Follower port for peer communication
       - "3889:3888"  # Leader election port
       - "8082:8080"  # AdminServer port for Zookeeper2
-    env_file:
-      - ./${PROJECT_NAME}/.env
     environment:
       - ZOO_SERVER_ID=2
     volumes:
@@ -38,7 +34,7 @@ services:
       - ${BIG_DATA_NETWORK}
 
   zookeeper3:
-    image: bitnami/zookeeper:latest
+    image: zookeeper:3.8.4
     container_name: zookeeper3
     hostname: zookeeper3
     ports:
@@ -46,8 +42,6 @@ services:
       - "2890:2888"  # Follower port for peer communication
       - "3890:3888"  # Leader election port
       - "8083:8080"  # AdminServer port for Zookeeper3
-    env_file:
-      - ./${PROJECT_NAME}/.env
     environment:
       - ZOO_SERVER_ID=3
     volumes:
