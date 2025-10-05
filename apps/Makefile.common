@@ -28,37 +28,39 @@ NC := $(shell tput sgr0)
 # Export all variables to sub-makes
 .EXPORT_ALL_VARIABLES:
 
-# Load environment variables from .env file if it exists
+# Load environment variables from .env if exists
 ifneq (,$(wildcard $(CURDIR)/.env))
     include $(CURDIR)/.env
 endif
 
-# Ensure PROJECT_NAME is set
-ifndef PROJECT_NAME
-    $(error PROJECT_NAME is not defined. Please set it in your .env file.)
-endif
-
-# Define paths and commands
+# Define paths
 ROOT_DIR := $(abspath $(CURDIR)/../..)
 SCRIPTS_DIR := $(ROOT_DIR)/apps/scripts
+
 COMPOSE_FILE := $(abspath $(CURDIR)/docker-compose.yml)
 COMMON_COMPOSE_FILE := $(abspath $(CURDIR)/../docker-compose.common.yml)
 ENV_COMMON_FILE := $(abspath $(CURDIR)/../.env)
 ENV_SERVICE_FILE := $(abspath $(CURDIR)/.env)
 
+# Use folder name as service/project name
+SERVICE_NAME := $(notdir $(CURDIR))
+
 DOCKER_COMPOSE := docker compose \
     -f $(COMMON_COMPOSE_FILE) \
     -f $(COMPOSE_FILE) \
-    -p $(PROJECT_NAME) \
+    -p $(SERVICE_NAME) \
     --env-file $(ENV_COMMON_FILE) \
     --env-file $(ENV_SERVICE_FILE)
 
+# Build context
 BUILD_CONTEXT := $(abspath $(CURDIR))
 export BUILD_CONTEXT
 
-APP_DATA_DIR := $(ROOT_DIR)/app-data
-CONFIGS_DIR := $(ROOT_DIR)/configs
-export APP_DATA_DIR CONFIGS_DIR
+# Paths for volumes
+APP_DATA_DIR := $(ROOT_DIR)/app-data/$(SERVICE_NAME)
+CONFIGS_DIR := $(ROOT_DIR)/configs/$(SERVICE_NAME)
+
+export APP_DATA_DIR CONFIGS_DIR SERVICE_NAME
 
 # Default target
 all: help
@@ -70,17 +72,17 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "  %-20s %s\n", "$(YELLOW)"$$1"$(NC)", $$2}' $(MAKEFILE_LIST)
 
 build: ## Build Docker images without using cache
-	@echo "$(GREEN)Building Docker images for $(PROJECT_NAME)...$(NC)"
+	@echo "$(GREEN)Building Docker images for $(SERVICE_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) build --no-cache
 	@echo "$(GREEN)Build complete!$(NC)"
 
 build-quick: ## Build Docker images using cache
-	@echo "$(GREEN)Building Docker images for $(PROJECT_NAME)...$(NC)"
+	@echo "$(GREEN)Building Docker images for $(SERVICE_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) build
 
 dependencies: ## Start all dependencies in the correct order
 	@if [ -n "$(DEPENDENCIES)" ] && [ "$(DEPENDENCIES)" != "null" ]; then \
-		"$(SCRIPTS_DIR)/resolve-deps.sh" "$(PROJECT_NAME)"; \
+		"$(SCRIPTS_DIR)/resolve-deps.sh" "$(SERVICE_NAME)"; \
 	fi
 
 up: ## Start all services, including dependencies
@@ -88,20 +90,20 @@ up: ## Start all services, including dependencies
 	@$(MAKE) up-minimal
 
 up-minimal: ## Start services for this project only
-	@echo "$(GREEN)\nStarting services for $(PROJECT_NAME)...$(NC)"
+	@echo "$(GREEN)\nStarting services for $(SERVICE_NAME)...$(NC)"
 	@$(MAKE) init
 	$(DOCKER_COMPOSE) up -d
 	@echo "$(GREEN)Waiting for services to be healthy...$(NC)"
 	@sleep 30
 	@$(MAKE) health
-	@echo "$(GREEN)Services for $(PROJECT_NAME) are up and healthy!$(NC)"
+	@echo "$(GREEN)Services for $(SERVICE_NAME) are up and healthy!$(NC)"
 
 up-service: ## Start a single service by name: make up-service SERVICE=servicename
 	@if [ -z "$(SERVICE)" ]; then \
 		echo "$(RED)SERVICE variable not set. Usage: make up-service SERVICE=servicename$(NC)"; \
 		exit 1; \
 	fi
-	@echo "$(GREEN)Starting service: $(SERVICE) for $(PROJECT_NAME)...$(NC)"
+	@echo "$(GREEN)Starting service: $(SERVICE) for $(SERVICE_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) up -d $(SERVICE)
 	@sleep 10
 
@@ -114,11 +116,11 @@ init: ## Initialize service-specific resources (override in service Makefile if 
 	@: # No-op
 
 down: ## Stop all services for this project
-	@echo "$(RED)Stopping services for $(PROJECT_NAME)...$(NC)"
+	@echo "$(RED)Stopping services for $(SERVICE_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) down
 
 down-volumes: ## Stop all services and remove volumes
-	@echo "$(RED)Stopping services and removing volumes for $(PROJECT_NAME)...$(NC)"
+	@echo "$(RED)Stopping services and removing volumes for $(SERVICE_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) down -v
 
 restart: ## Restart all services
@@ -126,7 +128,7 @@ restart: ## Restart all services
 	@$(MAKE) up
 
 logs: ## View logs for all services
-	@echo "$(GREEN)Viewing logs for $(PROJECT_NAME)...$(NC)"
+	@echo "$(GREEN)Viewing logs for $(SERVICE_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) logs -f
 
 clean: ## Remove unused Docker resources
@@ -140,7 +142,7 @@ status: ## List running services for this project
 ps: status ## Alias for status
 
 health: ## Check the health status of all components
-	@echo "$(GREEN)Checking health status for $(PROJECT_NAME)...$(NC)"
+	@echo "$(GREEN)Checking health status for $(SERVICE_NAME)...$(NC)"
 	@services=$$($(DOCKER_COMPOSE) config --services); \
 	for service in $$services; do \
 		health_status=$$(docker inspect --format='{{.State.Health.Status}}' $$($(DOCKER_COMPOSE) ps -q $$service) 2>/dev/null); \

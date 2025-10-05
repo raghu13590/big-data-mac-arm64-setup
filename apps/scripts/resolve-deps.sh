@@ -7,9 +7,9 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-PROJECT_NAME="$1"
-if [ -z "$PROJECT_NAME" ]; then
-    echo -e "${RED}Error: PROJECT_NAME not provided.${NC}"
+SERVICE_NAME="$1"
+if [ -z "$SERVICE_NAME" ]; then
+    echo -e "${RED}Error: SERVICE_NAME not provided.${NC}"
     exit 1
 fi
 
@@ -30,11 +30,9 @@ find_all_deps() {
     if grep -qw "$project" "$project_file"; then return; fi
     echo "$project" >> "$project_file"
 
-    # The script is expected to be run from a service directory, e.g., apps/zookeeper
-    # So we search for other services in the parent directory.
-    local project_dir=$(find .. -maxdepth 2 -type f -name ".env" -exec grep -l "PROJECT_NAME=$project" {} + | xargs dirname | head -n 1)
-    if [ -z "$project_dir" ]; then
-        echo -e "${RED}Error: Could not find directory for project: $project${NC}"
+    local project_dir="../$project"
+    if [ ! -f "$project_dir/.env" ]; then
+        echo -e "${RED}Error: Could not find the .env file for the project: $project${NC}"
         exit 1
     fi
 
@@ -46,8 +44,8 @@ find_all_deps() {
     fi
 }
 
-echo -e "${GREEN}Resolving dependency tree for $PROJECT_NAME...${NC}"
-find_all_deps "$PROJECT_NAME"
+echo -e "${GREEN}Resolving dependency tree for $SERVICE_NAME...${NC}"
+find_all_deps "$SERVICE_NAME"
 
 # Use tsort to find order and check for circular dependencies
 if ! sorted_deps=$(tsort "$dep_file" 2>/dev/null); then
@@ -57,15 +55,19 @@ if ! sorted_deps=$(tsort "$dep_file" 2>/dev/null); then
     fi
     # If tsort fails but not because of a cycle, it might be a single-node graph.
     # In that case, the project itself is the only thing.
-    sorted_deps=$PROJECT_NAME
+    sorted_deps=$SERVICE_NAME
 fi
 
 
 echo -e "${GREEN}Dependency start order:${NC} $sorted_deps"
 
 for dep in $sorted_deps; do
-    if [ "$dep" = "$PROJECT_NAME" ]; then continue; fi
-    dep_dir=$(find .. -maxdepth 2 -type f -name ".env" -exec grep -l "PROJECT_NAME=$dep" {} + | xargs dirname | head -n 1)
+    if [ "$dep" = "$SERVICE_NAME" ]; then continue; fi
+    dep_dir="../$dep"
+    if [ ! -f "$dep_dir/.env" ]; then
+        echo -e "${RED}Error: Could not find the .env file for dependency: $dep${NC}"
+        exit 1
+    fi
     echo -e "${GREEN}--- Starting dependency '$dep' in '$dep_dir'...${NC}"
     make -C "$dep_dir" up-minimal
     echo -e "${GREEN}--- Finished dependency '$dep' ---${NC}"

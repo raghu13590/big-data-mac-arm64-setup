@@ -13,9 +13,9 @@ clean-hadoop:
 	@$(DOCKER_COMPOSE) down -v
 	@services="$$( $(DOCKER_COMPOSE) config --services)"; \
 	for service in $$services; do \
-		echo "$(RED)Clearing $(APP_DATA_DIR)/${PROJECT_NAME}/$$service data...$(NC)"; \
-		if [ -d $(APP_DATA_DIR)/${PROJECT_NAME}/$$service ]; then \
-			find $(APP_DATA_DIR)/${PROJECT_NAME}/$$service -mindepth 1 -delete; \
+		echo "$(RED)Clearing $(APP_DATA_DIR)/$$service data...$(NC)"; \
+		if [ -d $(APP_DATA_DIR)/$$service ]; then \
+			find $(APP_DATA_DIR)/$$service -mindepth 1 -delete; \
 		fi; \
 	done
 
