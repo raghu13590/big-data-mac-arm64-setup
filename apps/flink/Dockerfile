@@ -1,38 +1,37 @@
 # Dockerfile for Flink Cluster
 
-# Use Ubuntu focal as the base image
-FROM ubuntu:focal
+# Use the official Flink image as base
+FROM flink:1.17.0-scala_2.12
 
 # Load environment variables from .env
 COPY .env /opt/flink/.env
 
-# Set the Flink version as an argument
+# Set environment variables
 ARG FLINK_VERSION
 ARG SCALA_VERSION
 ARG HADOOP_VERSION
 ARG JAVA_VERSION
+ARG HADOOP_USER_NAME
+ARG FLINK_HOME
+ARG HADOOP_HOME
+ARG FLINK_LIB_PATH
 
-ENV JAVA_HOME=${JAVA_HOME}
+ENV JAVA_HOME=/opt/java/openjdk
 ENV FLINK_HOME=${FLINK_HOME}
 ENV HADOOP_HOME=${HADOOP_HOME}
 ENV HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
 ENV YARN_CONF_DIR=${HADOOP_CONF_DIR}
 ENV HADOOP_USER_NAME=${HADOOP_USER_NAME}
-ENV PATH=${PATH}
+ENV PATH=${PATH}:${HADOOP_HOME}/bin
+ENV FLINK_LIB_PATH=${FLINK_LIB_PATH}
 
-# Prevent apt-get from prompting for timezone configuration
-ENV DEBIAN_FRONTEND=noninteractive
+# Switch to root to install packages
+USER root
 
-# Install OpenJDK and other dependencies
+# Install additional dependencies
 RUN apt-get update && \
-    apt-get install -y openjdk-${JAVA_VERSION}-jdk wget curl python3 python3-pip tzdata && \
+    apt-get install -y wget curl python3 python3-pip sudo && \
     rm -rf /var/lib/apt/lists/*
-
-# Install Flink
-RUN wget https://archive.apache.org/dist/flink/flink-${FLINK_VERSION}/flink-${FLINK_VERSION}-bin-scala_${SCALA_VERSION}.tgz && \
-    tar -xzf flink-${FLINK_VERSION}-bin-scala_${SCALA_VERSION}.tgz -C /opt && \
-    mv /opt/flink-${FLINK_VERSION} /opt/flink && \
-    rm flink-${FLINK_VERSION}-bin-scala_${SCALA_VERSION}.tgz
 
 # Install Hadoop
 RUN wget https://downloads.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz && \
@@ -40,10 +39,8 @@ RUN wget https://downloads.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/had
     rm hadoop-${HADOOP_VERSION}.tar.gz
 
 # Add Flink Hadoop integration
-RUN wget https://repo1.maven.org/maven2/org/apache/flink/flink-shaded-hadoop-2-uber/2.8.3-10.0/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar -O /opt/flink/lib/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar
-
-# Copy Hadoop configuration files
-COPY --from=hadoop:3.3.6 /opt/hadoop-3.3.6/etc/hadoop /opt/hadoop-3.3.6/etc/hadoop
+RUN mkdir -p ${FLINK_LIB_PATH} && \
+    wget https://repo1.maven.org/maven2/org/apache/flink/flink-shaded-hadoop-2-uber/2.8.3-10.0/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar -O ${FLINK_LIB_PATH}/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar
 
 # Create hadoop user and set up permissions
 RUN groupadd ${HADOOP_USER_NAME} && \

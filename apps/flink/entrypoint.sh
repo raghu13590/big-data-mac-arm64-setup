@@ -25,7 +25,11 @@ echo "JAVA_OPTS: $JAVA_OPTS"
 export PATH=$PATH:$HADOOP_HOME/bin:$FLINK_HOME/bin
 
 # List Flink binaries and check paths
+echo "Listing flink home directory:"
+ls -l $FLINK_HOME
+echo "Listing Flink bin directory:"
 ls -l $FLINK_HOME/bin
+echo "Checking flink and hadoop paths:"
 which flink
 which hadoop
 
@@ -34,9 +38,14 @@ if [ -f "$FLINK_HOME/conf/flink-env.sh" ]; then
   source "$FLINK_HOME/conf/flink-env.sh"
 fi
 
-# Copy Flink libraries to HDFS
-hadoop fs -mkdir -p $FLINK_HDFS_LIB_PATH
-hadoop fs -put $FLINK_HOME/lib/* $FLINK_HDFS_LIB_PATH/
+# Copy Flink libraries to HDFS (only if Hadoop is accessible)
+if hadoop fs -test -d / 2>/dev/null; then
+    echo "Hadoop is accessible, copying Flink libraries to HDFS..."
+    hadoop fs -mkdir -p $FLINK_HDFS_LIB_PATH 2>/dev/null || true
+    hadoop fs -put $FLINK_HOME/lib/* $FLINK_HDFS_LIB_PATH/ 2>/dev/null || echo "Failed to copy libs to HDFS, continuing..."
+else
+    echo "Hadoop not accessible, skipping HDFS library copy..."
+fi
 
 # Add to entrypoint.sh before starting Flink
 chown -R $HADOOP_USER_NAME:$HADOOP_USER_NAME $FLINK_HOME/log
