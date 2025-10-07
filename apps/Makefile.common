@@ -63,6 +63,8 @@ ENV_SERVICE_FILE := $(abspath $(CURDIR)/.env)
 
 export APP_DATA_DIR CONFIGS_DIR SERVICE_NAME ENV_SERVICE_FILE
 
+SLEEP_SECS := 30
+
 # Default target
 all: help
 
@@ -94,8 +96,8 @@ up-minimal: ## Start services for this project only
 	@echo "$(GREEN)\nStarting services for $(SERVICE_NAME)...$(NC)"
 	@$(MAKE) init
 	$(DOCKER_COMPOSE) up -d
-	@echo "$(GREEN)Waiting for services to be healthy...$(NC)"
-	@sleep 30
+	@echo "$(GREEN)Waiting for services to be healthy ($(SLEEP_SECS) seconds)...$(NC)"
+	@sleep $(SLEEP_SECS)
 	@$(MAKE) health
 	@echo "$(GREEN)Services for $(SERVICE_NAME) are up and healthy!$(NC)"
 
