@@ -17,7 +17,7 @@
 #
 
 # Phony targets prevent conflicts with file names
-.PHONY: help build build-quick up up-minimal down down-volumes restart logs clean status ps health dependencies init
+.PHONY: help build build-quick up up-minimal down down-volumes restart logs clean status ps health dependencies init debug-env debug-config
 
 # Define colors for console output
 RED := $(shell tput setaf 1)
@@ -59,9 +59,10 @@ export BUILD_CONTEXT
 # Paths for volumes
 APP_DATA_DIR := $(ROOT_DIR)/app-data/$(SERVICE_NAME)
 CONFIGS_DIR := $(ROOT_DIR)/configs/$(SERVICE_NAME)
+CONFIGS_DIR_HADOOP := $(ROOT_DIR)/configs/hadoop
 ENV_SERVICE_FILE := $(abspath $(CURDIR)/.env)
 
-export APP_DATA_DIR CONFIGS_DIR SERVICE_NAME ENV_SERVICE_FILE
+export APP_DATA_DIR CONFIGS_DIR SERVICE_NAME ENV_SERVICE_FILE CONFIGS_DIR_HADOOP
 
 SLEEP_SECS := 30
 
@@ -74,7 +75,7 @@ help: ## Show this help message
 	@echo "Available targets:"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "  %-20s %s\n", "$(YELLOW)"$$1"$(NC)", $$2}' $(MAKEFILE_LIST)
 
-build --no-cache: ## Build Docker images without using cache
+build -no-cache: ## Build Docker images without using cache
 	@echo "$(GREEN)Building Docker images for $(SERVICE_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) build --no-cache
 	@echo "$(GREEN)Build complete!$(NC)"
@@ -201,3 +202,19 @@ health-service-retry:
 	done; \
 	echo "Service $(SERVICE) failed to become healthy after 5 minutes."; \
 	exit 1
+
+debug-env:
+	@echo "ROOT_DIR: $(ROOT_DIR)"
+	@echo "SCRIPTS_DIR: $(SCRIPTS_DIR)"
+	@echo "SERVICE_NAME: $(SERVICE_NAME)"
+	@echo "BUILD_CONTEXT: $(BUILD_CONTEXT)"
+	@echo "ENV_SERVICE_FILE: $(ENV_SERVICE_FILE)"
+	@echo "COMMON_COMPOSE_FILE: $(COMMON_COMPOSE_FILE)"
+	@echo "COMPOSE_FILE: $(COMPOSE_FILE)"
+	@echo "DOCKER_COMPOSE: $(DOCKER_COMPOSE)"
+	@echo "APP_DATA_DIR: $(APP_DATA_DIR)"
+	@echo "CONFIGS_DIR: $(CONFIGS_DIR)"
+	@echo "CONFIGS_DIR_HADOOP: $(CONFIGS_DIR_HADOOP)"
+
+debug-config:
+	$(DOCKER_COMPOSE) config

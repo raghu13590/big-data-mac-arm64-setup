@@ -1,6 +1,18 @@
 x-build-default: &build-default
   build:
     context: ${BUILD_CONTEXT}
+    args:
+      - CONFIGS_DIR_HADOOP=${CONFIGS_DIR_HADOOP}
+      - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
+      - HADOOP_VERSION=${HADOOP_VERSION}
+      - SPARK_HADOOP_VERSION=${SPARK_HADOOP_VERSION}
+      - HADOOP_HOME=${HADOOP_HOME}
+      - SPARK_VERSION=${SPARK_VERSION}
+
+x-env-file-default: &env-file-default
+  env_file:
+    - .env # Common .env file
+    - ${ENV_SERVICE_FILE} # Service-specific .env file
 
 x-healthcheck-default: &healthcheck-default
   interval: ${HEALTHCHECK_INTERVAL}
@@ -9,7 +21,7 @@ x-healthcheck-default: &healthcheck-default
 
 services:
   spark-master:
-    <<: *build-default
+    <<: [*build-default, *env-file-default]
     container_name: spark-master
     ports:
       - "7077:7077"
@@ -25,10 +37,10 @@ services:
     volumes:
       - ${CONFIGS_DIR}/spark-env.sh:/opt/spark/conf/spark-env.sh
       - ${CONFIGS_DIR}/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
-      - ../configs/hadoop/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
-      - ../configs/hadoop/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
-      - ../configs/hadoop/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
-      - ../configs/hadoop/hive-site.xml:/opt/hive/hive-site.xml
+      - ${CONFIGS_DIR_HADOOP}/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
+      - ${CONFIGS_DIR_HADOOP}/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hive-site.xml:/opt/hive/hive-site.xml
       - ${APP_DATA_DIR}/history:/opt/spark/history
       - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
       - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
@@ -41,7 +53,7 @@ services:
       
 
   spark-worker-1:
-    <<: *build-default
+    <<: [*build-default, *env-file-default]
     container_name: spark-worker-1
     environment:
       - SPARK_WORKER_WEBUI_PORT=${SPARK_WORKER_WEBUI_PORT_1}
@@ -58,10 +70,10 @@ services:
     volumes:
       - ${CONFIGS_DIR}/spark-env.sh:/opt/spark/conf/spark-env.sh
       - ${CONFIGS_DIR}/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
-      - ../configs/hadoop/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
-      - ../configs/hadoop/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
-      - ../configs/hadoop/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
-      - ../configs/hadoop/hive-site.xml:/opt/hive/hive-site.xml
+      - ${CONFIGS_DIR_HADOOP}/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
+      - ${CONFIGS_DIR_HADOOP}/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hive-site.xml:/opt/hive/hive-site.xml
       - ${APP_DATA_DIR}/history:/opt/spark/history
       - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
       - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
@@ -73,7 +85,7 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8073"]
 
   spark-worker-2:
-    <<: *build-default
+    <<: [*build-default, *env-file-default]
     container_name: spark-worker-2
     environment:
       - SPARK_WORKER_WEBUI_PORT=${SPARK_WORKER_WEBUI_PORT_2}
@@ -90,10 +102,10 @@ services:
     volumes:
       - ${CONFIGS_DIR}/spark-env.sh:/opt/spark/conf/spark-env.sh
       - ${CONFIGS_DIR}/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
-      - ../configs/hadoop/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
-      - ../configs/hadoop/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
-      - ../configs/hadoop/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
-      - ../configs/hadoop/hive-site.xml:/opt/hive/hive-site.xml
+      - ${CONFIGS_DIR_HADOOP}//core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
+      - ${CONFIGS_DIR_HADOOP}/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hive-site.xml:/opt/hive/hive-site.xml
       - ${APP_DATA_DIR}/history:/opt/spark/history
       - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
       - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
@@ -106,7 +118,7 @@ services:
       
 
   spark-history:
-    <<: *build-default
+    <<: [*build-default, *env-file-default]
     container_name: spark-history
     ports:
       - "18080:18080"
@@ -123,4 +135,3 @@ services:
     healthcheck:
       <<: *healthcheck-default
       test: ["CMD", "curl", "-f", "http://localhost:18080"]
-      
