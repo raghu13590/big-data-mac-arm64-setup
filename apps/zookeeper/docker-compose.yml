@@ -11,7 +11,7 @@ services:
     environment:
       - ZOO_SERVER_ID=1
     volumes:
-      - ${CONFIGS_DIR}/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
+      - ${CONFIGS_DIR}/zoo.cfg:/conf/zoo.cfg
       - ${APP_DATA_DIR}/zookeeper1/data:/data
     networks:
       - ${BIG_DATA_NETWORK}
@@ -28,7 +28,7 @@ services:
     environment:
       - ZOO_SERVER_ID=2
     volumes:
-      - ${CONFIGS_DIR}/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
+      - ${CONFIGS_DIR}/zoo.cfg:/conf/zoo.cfg
       - ${APP_DATA_DIR}/zookeeper2/data:/data
     networks:
       - ${BIG_DATA_NETWORK}
@@ -45,7 +45,7 @@ services:
     environment:
       - ZOO_SERVER_ID=3
     volumes:
-      - ${CONFIGS_DIR}/zoo.cfg:/opt/bitnami/zookeeper/conf/zoo.cfg
+      - ${CONFIGS_DIR}/zoo.cfg:/conf/zoo.cfg
       - ${APP_DATA_DIR}/zookeeper3/data:/data
     networks:
       - ${BIG_DATA_NETWORK}
