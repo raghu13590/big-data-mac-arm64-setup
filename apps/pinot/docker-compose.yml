@@ -1,0 +1,134 @@
+x-build-config: &x-build-config # common build configuration
+  context: .
+  args:
+    PINOT_VERSION: ${PINOT_VERSION}
+
+services:
+  pinot-controller:
+    build:
+      <<: *x-build-config
+    container_name: pinot-controller
+    hostname: pinot-controller
+    ports:
+      - "9000:9000"
+    env_file:
+      - .env
+      - .env.controller
+    volumes:
+      - ../../app-data/pinot/controller/data:/var/pinot/controller/data
+      - ../../app-data/pinot/controller/logs:/var/pinot/controller/logs
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  pinot-broker:
+    build:
+      <<: *x-build-config
+    container_name: pinot-broker
+    hostname: pinot-broker
+    ports:
+      - "8099:8099"
+    env_file:
+      - .env
+      - .env.broker
+    volumes:
+      - ../../app-data/pinot/broker/logs:/var/pinot/broker/logs
+    depends_on:
+      pinot-controller:
+        condition: service_healthy
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8099/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  pinot-server-1:
+    build:
+      <<: *x-build-config
+    container_name: pinot-server-1
+    hostname: pinot-server-1
+    ports:
+      - "8098:8098"
+      - "8097:8097"  # Admin port
+    env_file:
+      - .env
+      - .env.server1
+    volumes:
+      - ../../app-data/pinot/server1/data:/var/pinot/server/data
+      - ../../app-data/pinot/server1/logs:/var/pinot/server/logs
+    depends_on:
+      pinot-broker:
+        condition: service_healthy
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8097/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  pinot-server-2:
+    build:
+      <<: *x-build-config
+    container_name: pinot-server-2
+    hostname: pinot-server-2
+    ports:
+      - "8198:8198"
+      - "8197:8097"  # Admin port
+    env_file:
+      - .env
+      - .env.server2
+    volumes:
+      - ../../app-data/pinot/server2/data:/var/pinot/server/data
+      - ../../app-data/pinot/server2/logs:/var/pinot/server/logs
+    depends_on:
+      pinot-broker:
+        condition: service_healthy
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8097/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  pinot-minion:
+    build:
+      <<: *x-build-config
+    container_name: pinot-minion
+    hostname: pinot-minion
+    ports:
+      - "9514:9514"
+    env_file:
+      - .env
+      - .env.minion
+    volumes:
+      - ../../app-data/pinot/minion/data:/var/pinot/minion/data
+      - ../../app-data/pinot/minion/logs:/var/pinot/minion/logs
+    depends_on:
+      pinot-server-1:
+        condition: service_healthy
+      pinot-server-2:
+        condition: service_healthy
+    networks:
+      - big-data-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9514/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  big-data-network:
+    external: true

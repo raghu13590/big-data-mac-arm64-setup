@@ -1,0 +1,51 @@
+services:
+  zookeeper1:
+    image: zookeeper:3.8.4
+    container_name: zookeeper1
+    hostname: zookeeper1
+    ports:
+      - "2181:2181"  # Client port for Zookeeper1
+      - "2888:2888"  # Follower port for peer communication
+      - "3888:3888"  # Leader election port
+      - "8081:8080"  # AdminServer port for Zookeeper1
+    environment:
+      - ZOO_SERVER_ID=1
+    volumes:
+      - ${CONFIGS_DIR}/zoo.cfg:/conf/zoo.cfg
+      - ${APP_DATA_DIR}/zookeeper1/data:/data
+    networks:
+      - ${BIG_DATA_NETWORK}
+
+  zookeeper2:
+    image: zookeeper:3.8.4
+    container_name: zookeeper2
+    hostname: zookeeper2
+    ports:
+      - "2182:2181"  # Client port for Zookeeper2
+      - "2889:2888"  # Follower port for peer communication
+      - "3889:3888"  # Leader election port
+      - "8082:8080"  # AdminServer port for Zookeeper2
+    environment:
+      - ZOO_SERVER_ID=2
+    volumes:
+      - ${CONFIGS_DIR}/zoo.cfg:/conf/zoo.cfg
+      - ${APP_DATA_DIR}/zookeeper2/data:/data
+    networks:
+      - ${BIG_DATA_NETWORK}
+
+  zookeeper3:
+    image: zookeeper:3.8.4
+    container_name: zookeeper3
+    hostname: zookeeper3
+    ports:
+      - "2183:2181"  # Client port for Zookeeper3
+      - "2890:2888"  # Follower port for peer communication
+      - "3890:3888"  # Leader election port
+      - "8083:8080"  # AdminServer port for Zookeeper3
+    environment:
+      - ZOO_SERVER_ID=3
+    volumes:
+      - ${CONFIGS_DIR}/zoo.cfg:/conf/zoo.cfg
+      - ${APP_DATA_DIR}/zookeeper3/data:/data
+    networks:
+      - ${BIG_DATA_NETWORK}

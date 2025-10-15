@@ -1,0 +1,187 @@
+x-hadoop-build: &hadoop-build
+  build:
+    context: ${BUILD_CONTEXT}
+    args:
+      HADOOP_VERSION: ${HADOOP_VERSION}
+      HIVE_VERSION: ${HIVE_VERSION}
+      MAVEN_OPTS: ${MAVEN_OPTS}
+      JAVA_HOME: ${JAVA_HOME}
+      MAVEN_HOME: ${MAVEN_HOME}
+      TZ: ${TZ}
+      LANG: ${LANG}
+      LANGUAGE: ${LANGUAGE}
+      LC_ALL: ${LC_ALL}
+      PYTHONIOENCODING: ${PYTHONIOENCODING}
+      POSTGRES_JDBC_VERSION: ${POSTGRES_JDBC_VERSION}
+      HADOOP_USER: ${HADOOP_USER}
+      HIVE_USER: ${HIVE_USER}
+      SUPERGROUP: ${SUPERGROUP}
+  environment:
+    HDFS_WAREHOUSE_DIR: ${HDFS_WAREHOUSE_DIR}
+    HDFS_STAGING_DIR: ${HDFS_STAGING_DIR}
+    HDFS_OWNER: ${HDFS_OWNER}
+    HDFS_PERMISSIONS: ${HDFS_PERMISSIONS}
+
+x-healthcheck-default: &healthcheck-default
+  interval: ${HEALTHCHECK_INTERVAL}
+  timeout: ${HEALTHCHECK_TIMEOUT}
+  retries: ${HEALTHCHECK_RETRIES}
+
+services:
+  namenode:
+    <<: *hadoop-build
+    container_name: ${NAMENODE}
+    hostname: ${NAMENODE}
+    ports:
+      - "9870:9870"
+    volumes:
+      - ${CONFIGS_DIR}:${HADOOP_CONF_DIR}
+      - ${APP_DATA_DIR}/${NAMENODE}:/hadoop/dfs/name
+      - ${APP_DATA_DIR}/datasets:/datasets
+    command: namenode
+    networks:
+      - big-data-network
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "bash", "-c", "nc -zv namenode 9000"]
+
+  datanode1:
+    <<: *hadoop-build
+    container_name: ${DATANODE1}
+    hostname: ${DATANODE1}
+    ports:
+      - "9864:9864"
+    depends_on:
+      - namenode
+    volumes:
+      - ${CONFIGS_DIR}:${HADOOP_CONF_DIR}
+      - ${APP_DATA_DIR}/${DATANODE1}:/hadoop/dfs/data
+      - ${APP_DATA_DIR}/datasets:/datasets
+    command: datanode
+    networks:
+      - big-data-network
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "curl", "-f", "http://localhost:9864"]
+
+  datanode2:
+    <<: *hadoop-build
+    container_name: ${DATANODE2}
+    hostname: ${DATANODE2}
+    ports:
+      - "9865:9864"
+    depends_on:
+      - namenode
+    volumes:
+      - ${CONFIGS_DIR}:${HADOOP_CONF_DIR}
+      - ${APP_DATA_DIR}/${DATANODE2}:/hadoop/dfs/data
+      - ${APP_DATA_DIR}/datasets:/datasets
+    command: datanode
+    networks:
+      - big-data-network
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "curl", "-f", "http://localhost:9864"]
+
+  resourcemanager:
+    <<: *hadoop-build
+    container_name: ${RESOURCEMANAGER}
+    hostname: ${RESOURCEMANAGER}
+    depends_on:
+      - namenode
+    ports:
+      - "8088:8088"
+    volumes:
+      - ${CONFIGS_DIR}:${HADOOP_CONF_DIR}
+    command: resourcemanager
+    networks:
+      - big-data-network
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "curl", "-f", "http://resourcemanager:8088/isActive"]
+
+  nodemanager1:
+    <<: *hadoop-build
+    container_name: ${NODEMANAGER1}
+    hostname: ${NODEMANAGER1}
+    depends_on:
+      - resourcemanager
+    ports:
+      - "8042:8042"
+    volumes:
+      - ${CONFIGS_DIR}:${HADOOP_CONF_DIR}
+    command: nodemanager
+    networks:
+      - big-data-network
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "curl", "-f", "http://localhost:8042"]
+
+  nodemanager2:
+    <<: *hadoop-build
+    container_name: ${NODEMANAGER2}
+    hostname: ${NODEMANAGER2}
+    depends_on:
+      - resourcemanager
+    ports:
+      - "8043:8042"
+    volumes:
+      - ${CONFIGS_DIR}:${HADOOP_CONF_DIR}
+    command: nodemanager
+    networks:
+      - big-data-network
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "curl", "-f", "http://localhost:8042"]
+
+  postgres:
+    image: postgres:13
+    container_name: ${POSTGRES}
+    hostname: ${POSTGRES}
+    environment:
+      POSTGRES_DB: metastore
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: hive
+    volumes:
+      - ${APP_DATA_DIR}/postgres:/var/lib/postgresql/data
+    networks:
+      - big-data-network
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD-SHELL", "pg_isready -U hive -d metastore"]
+
+  metastore:
+    <<: *hadoop-build
+    container_name: ${METASTORE}
+    hostname: ${METASTORE}
+    depends_on:
+      - postgres
+    volumes:
+      - ${CONFIGS_DIR}:${HADOOP_CONF_DIR}
+      - ${CONFIGS_DIR}/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
+      - ${APP_DATA_DIR}/metastore:/opt/hive-4.0.1/metastore_db
+    command: metastore
+    networks:
+      - big-data-network
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "bash", "-c", "nc -zv localhost 9083"]
+
+  hiveserver2:
+    <<: *hadoop-build
+    container_name: ${HIVESERVER2}
+    hostname: ${HIVESERVER2}
+    depends_on:
+      - metastore
+    volumes:
+      - ${CONFIGS_DIR}:${HADOOP_CONF_DIR}
+      - ${CONFIGS_DIR}/hive-site.xml:/opt/hive-4.0.1/conf/hive-site.xml
+      - ${APP_DATA_DIR}/datasets:/datasets
+    ports:
+      - "10000:10000"
+    command: hiveserver2
+    networks:
+      - big-data-network
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "bash", "-c", "nc -zv localhost 10000"]

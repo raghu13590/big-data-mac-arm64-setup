@@ -1,0 +1,220 @@
+# Common Makefile for Docker Compose management of services.
+# This Makefile is intended to be included from the top-level Makefile in each service directory.
+#
+# Features:
+# - Manages Docker Compose services for individual projects.
+# - Handles dependencies between services.
+# - Provides common targets for building, starting, stopping, and cleaning up services.
+# - Self-documenting help command.
+#
+# Usage:
+#   make <target>
+#
+# Example from a service directory (e.g., apps/zookeeper):
+#   make up       # Starts zookeeper and its dependencies
+#   make down     # Stops zookeeper
+#   make health   # Checks the health of zookeeper
+#
+
+# Phony targets prevent conflicts with file names
+.PHONY: help build build-quick up up-minimal down down-volumes restart logs clean status ps health dependencies init debug-env debug-config
+
+# Define colors for console output
+RED := $(shell tput setaf 1)
+GREEN := $(shell tput setaf 2)
+YELLOW := $(shell tput setaf 3)
+NC := $(shell tput sgr0)
+
+# Export all variables to sub-makes
+.EXPORT_ALL_VARIABLES:
+
+# Load environment variables from .env if exists
+ifneq (,$(wildcard $(CURDIR)/.env))
+    include $(CURDIR)/.env
+endif
+
+# Define paths
+ROOT_DIR := $(abspath $(CURDIR)/../..)
+SCRIPTS_DIR := $(ROOT_DIR)/apps/scripts
+
+COMPOSE_FILE := $(abspath $(CURDIR)/docker-compose.yml)
+COMMON_COMPOSE_FILE := $(abspath $(CURDIR)/../docker-compose.common.yml)
+ENV_COMMON_FILE := $(abspath $(CURDIR)/../.env)
+ENV_SERVICE_FILE := $(abspath $(CURDIR)/.env)
+
+# Use folder name as service/project name
+SERVICE_NAME := $(notdir $(CURDIR))
+
+DOCKER_COMPOSE := docker compose \
+    -f $(COMMON_COMPOSE_FILE) \
+    -f $(COMPOSE_FILE) \
+    -p $(SERVICE_NAME) \
+    --env-file $(ENV_COMMON_FILE) \
+    --env-file $(ENV_SERVICE_FILE)
+
+# Build context
+BUILD_CONTEXT := $(abspath $(CURDIR))
+export BUILD_CONTEXT
+
+# Paths for volumes
+APP_DATA_DIR := $(ROOT_DIR)/app-data/$(SERVICE_NAME)
+CONFIGS_DIR := $(ROOT_DIR)/configs/$(SERVICE_NAME)
+CONFIGS_DIR_HADOOP := $(ROOT_DIR)/configs/hadoop
+ENV_SERVICE_FILE := $(abspath $(CURDIR)/.env)
+
+export APP_DATA_DIR CONFIGS_DIR SERVICE_NAME ENV_SERVICE_FILE CONFIGS_DIR_HADOOP
+
+SLEEP_SECS := 30
+
+# Default target
+all: help
+
+help: ## Show this help message
+	@echo "Usage: make <target>"
+	@echo ""
+	@echo "Available targets:"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "  %-20s %s\n", "$(YELLOW)"$$1"$(NC)", $$2}' $(MAKEFILE_LIST)
+
+build -no-cache: ## Build Docker images without using cache
+	@echo "$(GREEN)Building Docker images for $(SERVICE_NAME)...$(NC)"
+	$(DOCKER_COMPOSE) build --no-cache
+	@echo "$(GREEN)Build complete!$(NC)"
+
+build: ## Build Docker images using cache
+	@echo "$(GREEN)Building Docker images for $(SERVICE_NAME)...$(NC)"
+	$(DOCKER_COMPOSE) build
+
+dependencies: ## Start all dependencies in the correct order
+	@if [ -n "$(DEPENDENCIES)" ] && [ "$(DEPENDENCIES)" != "null" ]; then \
+		"$(SCRIPTS_DIR)/resolve-deps.sh" "$(SERVICE_NAME)"; \
+	fi
+
+up: ## Start all services, including dependencies
+	@$(MAKE) dependencies
+	@$(MAKE) up-minimal
+
+up-minimal: ## Start services for this project only
+	@echo "$(GREEN)\nStarting services for $(SERVICE_NAME)...$(NC)"
+	@$(MAKE) init
+	$(DOCKER_COMPOSE) up -d
+	@echo "$(GREEN)Waiting for services to be healthy ($(SLEEP_SECS) seconds)...$(NC)"
+	@sleep $(SLEEP_SECS)
+	@$(MAKE) health
+	@echo "$(GREEN)Services for $(SERVICE_NAME) are up and healthy!$(NC)"
+
+up-service: ## Start a single service by name: make up-service SERVICE=servicename
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "$(RED)SERVICE variable not set. Usage: make up-service SERVICE=servicename$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)Starting service: $(SERVICE) for $(SERVICE_NAME)...$(NC)"
+	$(DOCKER_COMPOSE) up -d $(SERVICE)
+	@sleep 10
+
+up-service-health: ## Start a single service and wait for it to be healthy: make up-service-health SERVICE=servicename
+	@$(MAKE) up-service SERVICE=$(SERVICE)
+	@sleep 30
+	@$(MAKE) health-service-retry SERVICE=$(SERVICE)
+
+init: ## Initialize service-specific resources (override in service Makefile if needed)
+	@: # No-op
+
+down: ## Stop all services for this project
+	@echo "$(RED)Stopping services for $(SERVICE_NAME)...$(NC)"
+	$(DOCKER_COMPOSE) down
+
+down-volumes: ## Stop all services and remove volumes
+	@echo "$(RED)Stopping services and removing volumes for $(SERVICE_NAME)...$(NC)"
+	$(DOCKER_COMPOSE) down -v
+
+restart: ## Restart all services
+	@$(MAKE) down
+	@$(MAKE) up
+
+logs: ## View logs for all services
+	@echo "$(GREEN)Viewing logs for $(SERVICE_NAME)...$(NC)"
+	$(DOCKER_COMPOSE) logs -f
+
+clean: ## Remove unused Docker resources
+	@echo "$(RED)Cleaning up unused Docker resources...$(NC)"
+	docker system prune -f
+
+status: ## List running services for this project
+	@echo "$(GREEN)Listing running services for $(PROJECT_MAME)...$(NC)"
+	$(DOCKER_COMPOSE) ps
+
+ps: status ## Alias for status
+
+health: ## Check the health status of all components
+	@echo "$(GREEN)Checking health status for $(SERVICE_NAME)...$(NC)"
+	@services=$$($(DOCKER_COMPOSE) config --services); \
+	for service in $$services; do \
+		health_status=$$(docker inspect --format='{{.State.Health.Status}}' $$($(DOCKER_COMPOSE) ps -q $$service) 2>/dev/null); \
+		if [ "$$health_status" = "unhealthy" ]; then \
+			echo "$(RED)Service $$service is unhealthy.$(NC)"; \
+			exit 1; \
+		elif [ "$$health_status" != "healthy" ]; then \
+			echo "$(YELLOW)Service $$service is not healthy (status: $$health_status), but continuing...$(NC)"; \
+		fi; \
+	done
+	@echo "$(GREEN)All components are healthy!$(NC)"
+
+health-service: ## Check the health status of a single service: make health-service SERVICE=servicename
+	@echo "Checking health for service: $(SERVICE)"
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "SERVICE variable not set. Usage: make health-service SERVICE=servicename"; \
+		exit 1; \
+	fi; \
+	echo "Waiting for container $(SERVICE) to start..."; \
+	for i in $$(seq 1 10); do \
+		service_id=$$($(DOCKER_COMPOSE) ps -q $(SERVICE)); \
+		if [ -n "$$service_id" ]; then break; fi; \
+		sleep 5; \
+	done; \
+	if [ -z "$$service_id" ]; then \
+		echo "Service $(SERVICE) is not running."; \
+		exit 1; \
+	else \
+		echo "Inspecting health status for $(SERVICE)..."; \
+		health_status=$$(docker inspect --format='{{.State.Health.Status}}' $$service_id 2>/dev/null); \
+		echo "Health status: $$health_status"; \
+		echo "$$health_status"; \
+	fi; \
+	exit 0
+
+health-service-retry:
+	@attempts=0; \
+	while [ $$attempts -lt 30 ]; do \
+		status=$$($(MAKE) --no-print-directory health-service SERVICE=$(SERVICE) | tail -n 1); \
+		if [ "$$status" = "healthy" ]; then \
+			echo "Service $(SERVICE) is healthy."; \
+			exit 0; \
+		elif [ "$$status" = "unhealthy" ]; then \
+			echo "Service $(SERVICE) is unhealthy. Exiting."; \
+			exit 1; \
+		elif [ "$$status" = "starting" ]; then \
+			sleep 10; \
+		else \
+			echo "Unknown health status: $$status. Exiting."; \
+			exit 1; \
+		fi; \
+		attempts=$$((attempts+1)); \
+	done; \
+	echo "Service $(SERVICE) failed to become healthy after 5 minutes."; \
+	exit 1
+
+debug-env:
+	@echo "ROOT_DIR: $(ROOT_DIR)"
+	@echo "SCRIPTS_DIR: $(SCRIPTS_DIR)"
+	@echo "SERVICE_NAME: $(SERVICE_NAME)"
+	@echo "BUILD_CONTEXT: $(BUILD_CONTEXT)"
+	@echo "ENV_SERVICE_FILE: $(ENV_SERVICE_FILE)"
+	@echo "COMMON_COMPOSE_FILE: $(COMMON_COMPOSE_FILE)"
+	@echo "COMPOSE_FILE: $(COMPOSE_FILE)"
+	@echo "DOCKER_COMPOSE: $(DOCKER_COMPOSE)"
+	@echo "APP_DATA_DIR: $(APP_DATA_DIR)"
+	@echo "CONFIGS_DIR: $(CONFIGS_DIR)"
+	@echo "CONFIGS_DIR_HADOOP: $(CONFIGS_DIR_HADOOP)"
+
+debug-config:
+	$(DOCKER_COMPOSE) config

@@ -1,3 +1,2 @@
-/docker/service-data/
-/docker/app-data/
+/app-data/
 .idea/

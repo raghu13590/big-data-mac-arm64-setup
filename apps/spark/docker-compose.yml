@@ -1,0 +1,137 @@
+x-build-default: &build-default
+  build:
+    context: ${BUILD_CONTEXT}
+    args:
+      - CONFIGS_DIR_HADOOP=${CONFIGS_DIR_HADOOP}
+      - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
+      - HADOOP_VERSION=${HADOOP_VERSION}
+      - SPARK_HADOOP_VERSION=${SPARK_HADOOP_VERSION}
+      - HADOOP_HOME=${HADOOP_HOME}
+      - SPARK_VERSION=${SPARK_VERSION}
+
+x-env-file-default: &env-file-default
+  env_file:
+    - .env # Common .env file
+    - ${ENV_SERVICE_FILE} # Service-specific .env file
+
+x-healthcheck-default: &healthcheck-default
+  interval: ${HEALTHCHECK_INTERVAL}
+  timeout: ${HEALTHCHECK_TIMEOUT}
+  retries: ${HEALTHCHECK_RETRIES}
+
+services:
+  spark-master:
+    <<: [*build-default, *env-file-default]
+    container_name: spark-master
+    ports:
+      - "7077:7077"
+      - "8072:8072"
+      - "5005:5005"
+      - "4040:4040"
+    environment:
+      - SPARK_MASTER_HOST=${SPARK_MASTER_HOST}
+      - SPARK_PUBLIC_DNS=${SPARK_PUBLIC_DNS}
+      - SPARK_MASTER_WEBUI_PORT=${SPARK_MASTER_WEBUI_PORT}
+      - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
+      - ENABLE_DEBUG=${ENABLE_DEBUG}
+    volumes:
+      - ${CONFIGS_DIR}/spark-env.sh:/opt/spark/conf/spark-env.sh
+      - ${CONFIGS_DIR}/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ${CONFIGS_DIR_HADOOP}/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
+      - ${CONFIGS_DIR_HADOOP}/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hive-site.xml:/opt/hive/hive-site.xml
+      - ${APP_DATA_DIR}/history:/opt/spark/history
+      - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
+      - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
+    networks:
+      - ${BIG_DATA_NETWORK}
+    command: ["spark-class", "org.apache.spark.deploy.master.Master", "--webui-port", "${SPARK_MASTER_WEBUI_PORT}"]
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "curl", "-f", "http://localhost:8072"]
+      
+
+  spark-worker-1:
+    <<: [*build-default, *env-file-default]
+    container_name: spark-worker-1
+    environment:
+      - SPARK_WORKER_WEBUI_PORT=${SPARK_WORKER_WEBUI_PORT_1}
+      - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}
+      - SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
+      - SPARK_PUBLIC_DNS=${SPARK_PUBLIC_DNS}
+      - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
+      - ENABLE_DEBUG=${ENABLE_DEBUG}
+    ports:
+      - "8073:8073"
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    volumes:
+      - ${CONFIGS_DIR}/spark-env.sh:/opt/spark/conf/spark-env.sh
+      - ${CONFIGS_DIR}/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ${CONFIGS_DIR_HADOOP}/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
+      - ${CONFIGS_DIR_HADOOP}/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hive-site.xml:/opt/hive/hive-site.xml
+      - ${APP_DATA_DIR}/history:/opt/spark/history
+      - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
+      - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
+    networks:
+      - ${BIG_DATA_NETWORK}
+    command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "${SPARK_WORKER_WEBUI_PORT_1}"]
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "curl", "-f", "http://localhost:8073"]
+
+  spark-worker-2:
+    <<: [*build-default, *env-file-default]
+    container_name: spark-worker-2
+    environment:
+      - SPARK_WORKER_WEBUI_PORT=${SPARK_WORKER_WEBUI_PORT_2}
+      - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}
+      - SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
+      - SPARK_PUBLIC_DNS=${SPARK_PUBLIC_DNS}
+      - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
+      - ENABLE_DEBUG=${ENABLE_DEBUG}
+    ports:
+      - "8075:8075"
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    volumes:
+      - ${CONFIGS_DIR}/spark-env.sh:/opt/spark/conf/spark-env.sh
+      - ${CONFIGS_DIR}/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ${CONFIGS_DIR_HADOOP}//core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
+      - ${CONFIGS_DIR_HADOOP}/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
+      - ${CONFIGS_DIR_HADOOP}/hive-site.xml:/opt/hive/hive-site.xml
+      - ${APP_DATA_DIR}/history:/opt/spark/history
+      - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
+      - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
+    networks:
+      - ${BIG_DATA_NETWORK}
+    command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "${SPARK_WORKER_WEBUI_PORT_2}"]
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "curl", "-f", "http://localhost:8075"]
+      
+
+  spark-history:
+    <<: [*build-default, *env-file-default]
+    container_name: spark-history
+    ports:
+      - "18080:18080"
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    volumes:
+      - ${CONFIGS_DIR}/spark-env.sh:/opt/spark/conf/spark-env.sh
+      - ${CONFIGS_DIR}/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ${APP_DATA_DIR}/history:/opt/spark/history
+    networks:
+      - ${BIG_DATA_NETWORK}
+    command: ["spark-class", "org.apache.spark.deploy.history.HistoryServer"]
+    healthcheck:
+      <<: *healthcheck-default
+      test: ["CMD", "curl", "-f", "http://localhost:18080"]
