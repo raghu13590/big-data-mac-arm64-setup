@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 DATA_DIR = os.getenv('DATA_DIR', '/app/data/messages')
 
 # Define topics, create directories with topic names in /app/data/messages and add messages in those directories
-TOPICS = ['taa_in']  # Add more topics as needed
+TOPICS = ['your_topic']  # Add more topics as needed
 
 # Ensure the topic directories exist
 for topic in TOPICS:

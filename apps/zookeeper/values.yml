@@ -1,0 +1,4 @@
+zookeepers:
+  - { id: 1, name: zookeeper1, client_port: 2181, follower_port: 2888, election_port: 3888, admin_port: 8081 }
+  - { id: 2, name: zookeeper2, client_port: 2182, follower_port: 2889, election_port: 3889, admin_port: 8082 }
+  - { id: 3, name: zookeeper3, client_port: 2183, follower_port: 2890, election_port: 3890, admin_port: 8083 }

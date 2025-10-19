@@ -1,0 +1,22 @@
+{% extends "base.yml.j2" %}
+
+{% block services %}
+{% for zk in zookeepers %}
+  {{ zk.name }}:
+    image: zookeeper:{{ ZOOKEEPER_VERSION | default("3.8.4") }}
+    container_name: {{ zk.name }}
+    hostname: {{ zk.name }}
+    ports:
+      - "{{ zk.client_port }}:2181"
+      - "{{ zk.follower_port }}:2888"
+      - "{{ zk.election_port }}:3888"
+      - "{{ zk.admin_port }}:8080"
+    environment:
+      - ZOO_SERVER_ID={{ zk.id }}
+    volumes:
+      - ${CONFIGS_DIR}/zoo.cfg:/conf/zoo.cfg
+      - ${APP_DATA_DIR}/{{ zk.name }}/data:/data
+    networks:
+      - {{ BIG_DATA_NETWORK }}
+{% endfor %}
+{% endblock %}

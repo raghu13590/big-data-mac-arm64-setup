@@ -90,6 +90,7 @@ dependencies: ## Start all dependencies in the correct order
 	fi
 
 up: ## Start all services, including dependencies
+	@$(MAKE) render
 	@$(MAKE) dependencies
 	@$(MAKE) up-minimal
 
@@ -218,3 +219,9 @@ debug-env:
 
 debug-config:
 	$(DOCKER_COMPOSE) config
+
+render: ## Render docker-compose.yml from Jinja template
+	@echo "Rendering $(SERVICE_NAME)..."
+	@echo "$(GREEN)Building jinja2-renderer image...$(NC)"
+	docker build -t jinja2-renderer $(ROOT_DIR)/apps/jinja2
+	docker run --rm -v $(ROOT_DIR)/apps:/app jinja2-renderer python3 jinja2/render.py $(SERVICE_NAME)
