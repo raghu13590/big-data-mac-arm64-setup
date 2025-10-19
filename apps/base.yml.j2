@@ -1,3 +1,16 @@
+{% macro healthcheck(command, port=None) -%}
+healthcheck:
+  interval: {{ HEALTHCHECK_INTERVAL }}
+  timeout: {{ HEALTHCHECK_TIMEOUT }}
+  retries: {{ HEALTHCHECK_RETRIES }}
+  test: [ "CMD-SHELL", "{{ command }}" ]
+{%- endmacro -%}
+
+{% macro build_context() -%}
+build:
+  context: ${BUILD_CONTEXT}
+{%- endmacro -%}
+
 services:
 {%- block services -%}{%- endblock -%}
 

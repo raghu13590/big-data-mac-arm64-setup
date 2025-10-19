@@ -1,28 +1,25 @@
-x-build-default: &build-default
-  build:
-    context: ${BUILD_CONTEXT}
-
-x-healthcheck-default: &healthcheck-default
-  interval: ${HEALTHCHECK_INTERVAL}
-  timeout: ${HEALTHCHECK_TIMEOUT}
-  retries: ${HEALTHCHECK_RETRIES}
-
 services:
   zoonavigator:
-    <<: *build-default
+    build:
+      context: ${BUILD_CONTEXT}
     image: elkozmon/zoonavigator:latest
     container_name: zoonavigator
     ports:
-      - "2180:2180"  # Expose port 2180 on container as 2180 on the host
+      - "2180:2180"
     env_file:
       - ${ENV_SERVICE_FILE}
     environment:
-      ZOOKEEPER_SERVERS: ${ZK_ADDRESS}
+      ZOOKEEPER_SERVERS: zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
     healthcheck:
-      <<: *healthcheck-default
-      test: [ "CMD-SHELL", "curl -f http://localhost:2180 || exit 1" ]  # Health check using curl
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "curl -f http://localhost:2180 || exit 1" ]
     volumes:
       - ${CONFIGS_DIR}:/app/configs
       - ${APP_DATA_DIR}:/app/volumes
     networks:
-      - ${BIG_DATA_NETWORK}
+      - big-data-network
+networks:
+  big-data-network:
+    external: true

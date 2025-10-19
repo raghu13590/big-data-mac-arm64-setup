@@ -1,0 +1,20 @@
+{% extends "base.yml.j2" %}
+
+{% block services %}
+  zoonavigator:
+    {{ build_context() | indent(4) }}
+    image: elkozmon/zoonavigator:latest
+    container_name: zoonavigator
+    ports:
+      - "2180:2180"
+    env_file:
+      - ${ENV_SERVICE_FILE}
+    environment:
+      ZOOKEEPER_SERVERS: {{ ZK_ADDRESS }}
+    {{ healthcheck("curl -f http://localhost:2180 || exit 1") | indent(4) }}
+    volumes:
+      - ${CONFIGS_DIR}:/app/configs
+      - ${APP_DATA_DIR}:/app/volumes
+    networks:
+      - {{ BIG_DATA_NETWORK }}
+{% endblock %}
