@@ -3,6 +3,7 @@
 {% block services %}
 {% for zk in zookeepers %}
   {{ zk.name }}:
+    {{ build_context() | indent(4) }}
     image: zookeeper:{{ ZOOKEEPER_VERSION | default("3.8.4") }}
     container_name: {{ zk.name }}
     hostname: {{ zk.name }}

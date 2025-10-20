@@ -48,6 +48,7 @@ test:
 	@$(CURDIR)/tests.sh
 
 up: ## Start Hadoop services (normal flow, no reset)
+	@$(MAKE) render
 	@$(MAKE) dependencies
 	@$(MAKE) up-service-health SERVICE=namenode
 	@$(MAKE) up-service-health SERVICE=datanode1
@@ -62,6 +63,7 @@ up: ## Start Hadoop services (normal flow, no reset)
 	@$(MAKE) test
 
 up-reset: ## Perform a full clean install and start Hadoop services
+	@$(MAKE) render
 	@$(MAKE) dependencies
 	@$(MAKE) build-quick
 	@$(MAKE) clean-hadoop

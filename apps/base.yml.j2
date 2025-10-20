@@ -6,9 +6,23 @@ healthcheck:
   test: [ "CMD-SHELL", "{{ command }}" ]
 {%- endmacro -%}
 
-{% macro build_context() -%}
+{% macro build_context(context=None, args=None) -%}
 build:
-  context: ${BUILD_CONTEXT}
+  context: {{ context if context is not none else '${BUILD_CONTEXT}' }}
+  {%- if args %}
+  args:
+    {%- for key, value in args.items() %}
+    {{ key }}: {{ value }}
+    {%- endfor %}
+  {%- endif %}
+{%- endmacro %}
+
+{% macro volume_mount(source, target) -%}
+- {{ source }}:{{ target }}
+{%- endmacro -%}
+
+{% macro port_map(host_port, container_port) -%}
+- "{{ host_port }}:{{ container_port }}"
 {%- endmacro -%}
 
 services:

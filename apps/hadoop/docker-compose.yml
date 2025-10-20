@@ -1,37 +1,31 @@
-x-hadoop-build: &hadoop-build
-  build:
-    context: ${BUILD_CONTEXT}
-    args:
-      HADOOP_VERSION: ${HADOOP_VERSION}
-      HIVE_VERSION: ${HIVE_VERSION}
-      MAVEN_OPTS: ${MAVEN_OPTS}
-      JAVA_HOME: ${JAVA_HOME}
-      MAVEN_HOME: ${MAVEN_HOME}
-      TZ: ${TZ}
-      LANG: ${LANG}
-      LANGUAGE: ${LANGUAGE}
-      LC_ALL: ${LC_ALL}
-      PYTHONIOENCODING: ${PYTHONIOENCODING}
-      POSTGRES_JDBC_VERSION: ${POSTGRES_JDBC_VERSION}
-      HADOOP_USER: ${HADOOP_USER}
-      HIVE_USER: ${HIVE_USER}
-      SUPERGROUP: ${SUPERGROUP}
-  environment:
-    HDFS_WAREHOUSE_DIR: ${HDFS_WAREHOUSE_DIR}
-    HDFS_STAGING_DIR: ${HDFS_STAGING_DIR}
-    HDFS_OWNER: ${HDFS_OWNER}
-    HDFS_PERMISSIONS: ${HDFS_PERMISSIONS}
 
-x-healthcheck-default: &healthcheck-default
-  interval: ${HEALTHCHECK_INTERVAL}
-  timeout: ${HEALTHCHECK_TIMEOUT}
-  retries: ${HEALTHCHECK_RETRIES}
 
 services:
   namenode:
-    <<: *hadoop-build
-    container_name: ${NAMENODE}
-    hostname: ${NAMENODE}
+    build:
+      context: ${BUILD_CONTEXT}
+      args:
+        HADOOP_VERSION: 3.3.6
+        HIVE_VERSION: 4.0.1
+        MAVEN_OPTS: -Xms512m -Xmx8192m
+        JAVA_HOME: /usr/lib/jvm/java-11-openjdk-arm64
+        MAVEN_HOME: /usr/share/maven
+        TZ: UTC
+        LANG: en_US.UTF-8
+        LANGUAGE: en_US:en
+        LC_ALL: en_US.UTF-8
+        PYTHONIOENCODING: utf-8
+        POSTGRES_JDBC_VERSION: 42.6.0
+        HADOOP_USER: hadoop
+        HIVE_USER: hive
+        SUPERGROUP: supergroup
+    environment:
+      HDFS_WAREHOUSE_DIR: /user/hive/warehouse
+      HDFS_STAGING_DIR: /tmp/hadoop-yarn/staging
+      HDFS_OWNER: hive:hadoop
+      HDFS_PERMISSIONS: 777
+    container_name: namenode
+    hostname: namenode
     ports:
       - "9870:9870"
     volumes:
@@ -42,13 +36,36 @@ services:
     networks:
       - big-data-network
     healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD", "bash", "-c", "nc -zv namenode 9000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "nc -zv namenode 9000" ]
 
   datanode1:
-    <<: *hadoop-build
-    container_name: ${DATANODE1}
-    hostname: ${DATANODE1}
+    build:
+      context: ${BUILD_CONTEXT}
+      args:
+        HADOOP_VERSION: 3.3.6
+        HIVE_VERSION: 4.0.1
+        MAVEN_OPTS: -Xms512m -Xmx8192m
+        JAVA_HOME: /usr/lib/jvm/java-11-openjdk-arm64
+        MAVEN_HOME: /usr/share/maven
+        TZ: UTC
+        LANG: en_US.UTF-8
+        LANGUAGE: en_US:en
+        LC_ALL: en_US.UTF-8
+        PYTHONIOENCODING: utf-8
+        POSTGRES_JDBC_VERSION: 42.6.0
+        HADOOP_USER: hadoop
+        HIVE_USER: hive
+        SUPERGROUP: supergroup
+    environment:
+      HDFS_WAREHOUSE_DIR: /user/hive/warehouse
+      HDFS_STAGING_DIR: /tmp/hadoop-yarn/staging
+      HDFS_OWNER: hive:hadoop
+      HDFS_PERMISSIONS: 777
+    container_name: datanode1
+    hostname: datanode1
     ports:
       - "9864:9864"
     depends_on:
@@ -61,13 +78,36 @@ services:
     networks:
       - big-data-network
     healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD", "curl", "-f", "http://localhost:9864"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "curl -f http://localhost:9864" ]
 
   datanode2:
-    <<: *hadoop-build
-    container_name: ${DATANODE2}
-    hostname: ${DATANODE2}
+    build:
+      context: ${BUILD_CONTEXT}
+      args:
+        HADOOP_VERSION: 3.3.6
+        HIVE_VERSION: 4.0.1
+        MAVEN_OPTS: -Xms512m -Xmx8192m
+        JAVA_HOME: /usr/lib/jvm/java-11-openjdk-arm64
+        MAVEN_HOME: /usr/share/maven
+        TZ: UTC
+        LANG: en_US.UTF-8
+        LANGUAGE: en_US:en
+        LC_ALL: en_US.UTF-8
+        PYTHONIOENCODING: utf-8
+        POSTGRES_JDBC_VERSION: 42.6.0
+        HADOOP_USER: hadoop
+        HIVE_USER: hive
+        SUPERGROUP: supergroup
+    environment:
+      HDFS_WAREHOUSE_DIR: /user/hive/warehouse
+      HDFS_STAGING_DIR: /tmp/hadoop-yarn/staging
+      HDFS_OWNER: hive:hadoop
+      HDFS_PERMISSIONS: 777
+    container_name: datanode2
+    hostname: datanode2
     ports:
       - "9865:9864"
     depends_on:
@@ -80,13 +120,36 @@ services:
     networks:
       - big-data-network
     healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD", "curl", "-f", "http://localhost:9864"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "curl -f http://localhost:9864" ]
 
   resourcemanager:
-    <<: *hadoop-build
-    container_name: ${RESOURCEMANAGER}
-    hostname: ${RESOURCEMANAGER}
+    build:
+      context: ${BUILD_CONTEXT}
+      args:
+        HADOOP_VERSION: 3.3.6
+        HIVE_VERSION: 4.0.1
+        MAVEN_OPTS: -Xms512m -Xmx8192m
+        JAVA_HOME: /usr/lib/jvm/java-11-openjdk-arm64
+        MAVEN_HOME: /usr/share/maven
+        TZ: UTC
+        LANG: en_US.UTF-8
+        LANGUAGE: en_US:en
+        LC_ALL: en_US.UTF-8
+        PYTHONIOENCODING: utf-8
+        POSTGRES_JDBC_VERSION: 42.6.0
+        HADOOP_USER: hadoop
+        HIVE_USER: hive
+        SUPERGROUP: supergroup
+    environment:
+      HDFS_WAREHOUSE_DIR: /user/hive/warehouse
+      HDFS_STAGING_DIR: /tmp/hadoop-yarn/staging
+      HDFS_OWNER: hive:hadoop
+      HDFS_PERMISSIONS: 777
+    container_name: resourcemanager
+    hostname: resourcemanager
     depends_on:
       - namenode
     ports:
@@ -97,13 +160,36 @@ services:
     networks:
       - big-data-network
     healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD", "curl", "-f", "http://resourcemanager:8088/isActive"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "curl -f http://resourcemanager:8088/isActive" ]
 
   nodemanager1:
-    <<: *hadoop-build
-    container_name: ${NODEMANAGER1}
-    hostname: ${NODEMANAGER1}
+    build:
+      context: ${BUILD_CONTEXT}
+      args:
+        HADOOP_VERSION: 3.3.6
+        HIVE_VERSION: 4.0.1
+        MAVEN_OPTS: -Xms512m -Xmx8192m
+        JAVA_HOME: /usr/lib/jvm/java-11-openjdk-arm64
+        MAVEN_HOME: /usr/share/maven
+        TZ: UTC
+        LANG: en_US.UTF-8
+        LANGUAGE: en_US:en
+        LC_ALL: en_US.UTF-8
+        PYTHONIOENCODING: utf-8
+        POSTGRES_JDBC_VERSION: 42.6.0
+        HADOOP_USER: hadoop
+        HIVE_USER: hive
+        SUPERGROUP: supergroup
+    environment:
+      HDFS_WAREHOUSE_DIR: /user/hive/warehouse
+      HDFS_STAGING_DIR: /tmp/hadoop-yarn/staging
+      HDFS_OWNER: hive:hadoop
+      HDFS_PERMISSIONS: 777
+    container_name: nodemanager1
+    hostname: nodemanager1
     depends_on:
       - resourcemanager
     ports:
@@ -114,13 +200,36 @@ services:
     networks:
       - big-data-network
     healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD", "curl", "-f", "http://localhost:8042"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "curl -f http://localhost:8042" ]
 
   nodemanager2:
-    <<: *hadoop-build
-    container_name: ${NODEMANAGER2}
-    hostname: ${NODEMANAGER2}
+    build:
+      context: ${BUILD_CONTEXT}
+      args:
+        HADOOP_VERSION: 3.3.6
+        HIVE_VERSION: 4.0.1
+        MAVEN_OPTS: -Xms512m -Xmx8192m
+        JAVA_HOME: /usr/lib/jvm/java-11-openjdk-arm64
+        MAVEN_HOME: /usr/share/maven
+        TZ: UTC
+        LANG: en_US.UTF-8
+        LANGUAGE: en_US:en
+        LC_ALL: en_US.UTF-8
+        PYTHONIOENCODING: utf-8
+        POSTGRES_JDBC_VERSION: 42.6.0
+        HADOOP_USER: hadoop
+        HIVE_USER: hive
+        SUPERGROUP: supergroup
+    environment:
+      HDFS_WAREHOUSE_DIR: /user/hive/warehouse
+      HDFS_STAGING_DIR: /tmp/hadoop-yarn/staging
+      HDFS_OWNER: hive:hadoop
+      HDFS_PERMISSIONS: 777
+    container_name: nodemanager2
+    hostname: nodemanager2
     depends_on:
       - resourcemanager
     ports:
@@ -131,13 +240,15 @@ services:
     networks:
       - big-data-network
     healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD", "curl", "-f", "http://localhost:8042"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "curl -f http://localhost:8042" ]
 
   postgres:
     image: postgres:13
-    container_name: ${POSTGRES}
-    hostname: ${POSTGRES}
+    container_name: postgres
+    hostname: postgres
     environment:
       POSTGRES_DB: metastore
       POSTGRES_USER: hive
@@ -147,13 +258,36 @@ services:
     networks:
       - big-data-network
     healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD-SHELL", "pg_isready -U hive -d metastore"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "pg_isready -U hive -d metastore" ]
 
   metastore:
-    <<: *hadoop-build
-    container_name: ${METASTORE}
-    hostname: ${METASTORE}
+    build:
+      context: ${BUILD_CONTEXT}
+      args:
+        HADOOP_VERSION: 3.3.6
+        HIVE_VERSION: 4.0.1
+        MAVEN_OPTS: -Xms512m -Xmx8192m
+        JAVA_HOME: /usr/lib/jvm/java-11-openjdk-arm64
+        MAVEN_HOME: /usr/share/maven
+        TZ: UTC
+        LANG: en_US.UTF-8
+        LANGUAGE: en_US:en
+        LC_ALL: en_US.UTF-8
+        PYTHONIOENCODING: utf-8
+        POSTGRES_JDBC_VERSION: 42.6.0
+        HADOOP_USER: hadoop
+        HIVE_USER: hive
+        SUPERGROUP: supergroup
+    environment:
+      HDFS_WAREHOUSE_DIR: /user/hive/warehouse
+      HDFS_STAGING_DIR: /tmp/hadoop-yarn/staging
+      HDFS_OWNER: hive:hadoop
+      HDFS_PERMISSIONS: 777
+    container_name: metastore
+    hostname: metastore
     depends_on:
       - postgres
     volumes:
@@ -164,13 +298,36 @@ services:
     networks:
       - big-data-network
     healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD", "bash", "-c", "nc -zv localhost 9083"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "nc -zv localhost 9083" ]
 
   hiveserver2:
-    <<: *hadoop-build
-    container_name: ${HIVESERVER2}
-    hostname: ${HIVESERVER2}
+    build:
+      context: ${BUILD_CONTEXT}
+      args:
+        HADOOP_VERSION: 3.3.6
+        HIVE_VERSION: 4.0.1
+        MAVEN_OPTS: -Xms512m -Xmx8192m
+        JAVA_HOME: /usr/lib/jvm/java-11-openjdk-arm64
+        MAVEN_HOME: /usr/share/maven
+        TZ: UTC
+        LANG: en_US.UTF-8
+        LANGUAGE: en_US:en
+        LC_ALL: en_US.UTF-8
+        PYTHONIOENCODING: utf-8
+        POSTGRES_JDBC_VERSION: 42.6.0
+        HADOOP_USER: hadoop
+        HIVE_USER: hive
+        SUPERGROUP: supergroup
+    environment:
+      HDFS_WAREHOUSE_DIR: /user/hive/warehouse
+      HDFS_STAGING_DIR: /tmp/hadoop-yarn/staging
+      HDFS_OWNER: hive:hadoop
+      HDFS_PERMISSIONS: 777
+    container_name: hiveserver2
+    hostname: hiveserver2
     depends_on:
       - metastore
     volumes:
@@ -183,5 +340,10 @@ services:
     networks:
       - big-data-network
     healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD", "bash", "-c", "nc -zv localhost 10000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "nc -zv localhost 10000" ]
+networks:
+  big-data-network:
+    external: true
