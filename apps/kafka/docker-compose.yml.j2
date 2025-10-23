@@ -1,0 +1,16 @@
+{% extends "base.yml.j2" %}
+
+{% block services %}
+  kafka:
+    {{ build_context() | indent(4) }}
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    command: ["/opt/kafka/bin/kafka-server-start.sh", "/opt/kafka/config/server.properties"]
+    {{ healthcheck("kafka-broker-api-versions.sh --bootstrap-server localhost:9092 | grep -q 'kafka:9092'") | indent(4) }}
+    volumes:
+      - ${CONFIGS_DIR}/server.properties:/opt/kafka/config/server.properties
+      - ${APP_DATA_DIR}/data:/var/lib/kafka/data
+    networks:
+      - {{ BIG_DATA_NETWORK }}
+{% endblock %}

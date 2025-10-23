@@ -1,17 +1,23 @@
+
+
 services:
   kafka:
     build:
       context: ${BUILD_CONTEXT}
+    container_name: kafka
     ports:
       - "9092:9092"
     command: ["/opt/kafka/bin/kafka-server-start.sh", "/opt/kafka/config/server.properties"]
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 | grep -q 'kafka:9092'"]
       interval: 30s
       timeout: 10s
       retries: 5
+      test: [ "CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 | grep -q 'kafka:9092'" ]
     volumes:
       - ${CONFIGS_DIR}/server.properties:/opt/kafka/config/server.properties
       - ${APP_DATA_DIR}/data:/var/lib/kafka/data
     networks:
-      - ${BIG_DATA_NETWORK}
+      - big-data-network
+networks:
+  big-data-network:
+    external: true

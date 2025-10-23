@@ -26,7 +26,7 @@ if values_file.exists():
 #  - base_dir (for base.yml.j2 and shared templates)
 env = Environment(
     loader=FileSystemLoader([str(base_dir / service), str(base_dir)]),
-    autoescape=select_autoescape(enabled_extensions=("j2",))
+    autoescape=False
 )
 
 # Load the service template
