@@ -75,8 +75,8 @@ help: ## Show this help message
 	@echo "Available targets:"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "  %-20s %s\n", "$(YELLOW)"$$1"$(NC)", $$2}' $(MAKEFILE_LIST)
 
-build -no-cache: ## Build Docker images without using cache
-	@echo "$(GREEN)Building Docker images for $(SERVICE_NAME)...$(NC)"
+build-no-cache: ## Build Docker images without using cache
+	@echo "$(GREEN)Building Docker images without cache for $(SERVICE_NAME)...$(NC)"
 	$(DOCKER_COMPOSE) build --no-cache
 	@echo "$(GREEN)Build complete!$(NC)"
 
