@@ -94,6 +94,10 @@ up: ## Start all services, including dependencies
 	@$(MAKE) dependencies
 	@$(MAKE) up-minimal
 
+up-without-jinja2: ## Start all services without rendering
+	@$(MAKE) dependencies
+	@$(MAKE) up-minimal
+
 up-minimal: ## Start services for this project only
 	@echo "$(GREEN)\nStarting services for $(SERVICE_NAME)...$(NC)"
 	@$(MAKE) init
