@@ -1,16 +1,26 @@
 {% extends "base.yml.j2" %}
 
+{% set kafka_nodes = [
+    {"id": 1, "port": 9092, "name": "kafka1"},
+    {"id": 2, "port": 9093, "name": "kafka2"},
+    {"id": 3, "port": 9094, "name": "kafka3"}
+] %}
+
 {% block services %}
-  kafka:
+  {% for node in kafka_nodes %}
+  {{ node.name }}:
     {{ build_context() | indent(4) }}
-    container_name: kafka
+    container_name: {{ node.name }}
     ports:
-      - "9092:9092"
+      - "{{ node.port }}:9092"
     command: ["/opt/kafka/bin/kafka-server-start.sh", "/opt/kafka/config/server.properties"]
-    {{ healthcheck("kafka-broker-api-versions.sh --bootstrap-server localhost:9092 | grep -q 'kafka:9092'") | indent(4) }}
+    environment:
+      - KAFKA_BROKER_ID={{ node.id }}
+      - KAFKA_ADVERTISED_HOST_NAME={{ node.name }}
     volumes:
       - ${CONFIGS_DIR}/server.properties:/opt/kafka/config/server.properties
-      - ${APP_DATA_DIR}/data:/var/lib/kafka/data
+      - ${APP_DATA_DIR}/{{ node.name }}:/var/lib/kafka/data
     networks:
       - {{ BIG_DATA_NETWORK }}
+  {% endfor %}
 {% endblock %}

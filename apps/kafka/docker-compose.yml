@@ -1,23 +1,55 @@
 
 
 services:
-  kafka:
+  
+  kafka1:
     build:
       context: ${BUILD_CONTEXT}
-    container_name: kafka
+    container_name: kafka1
     ports:
       - "9092:9092"
     command: ["/opt/kafka/bin/kafka-server-start.sh", "/opt/kafka/config/server.properties"]
-    healthcheck:
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      test: [ "CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 | grep -q 'kafka:9092'" ]
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ADVERTISED_HOST_NAME=kafka1
     volumes:
       - ${CONFIGS_DIR}/server.properties:/opt/kafka/config/server.properties
-      - ${APP_DATA_DIR}/data:/var/lib/kafka/data
+      - ${APP_DATA_DIR}/kafka1:/var/lib/kafka/data
     networks:
       - big-data-network
+  
+  kafka2:
+    build:
+      context: ${BUILD_CONTEXT}
+    container_name: kafka2
+    ports:
+      - "9093:9092"
+    command: ["/opt/kafka/bin/kafka-server-start.sh", "/opt/kafka/config/server.properties"]
+    environment:
+      - KAFKA_BROKER_ID=2
+      - KAFKA_ADVERTISED_HOST_NAME=kafka2
+    volumes:
+      - ${CONFIGS_DIR}/server.properties:/opt/kafka/config/server.properties
+      - ${APP_DATA_DIR}/kafka2:/var/lib/kafka/data
+    networks:
+      - big-data-network
+  
+  kafka3:
+    build:
+      context: ${BUILD_CONTEXT}
+    container_name: kafka3
+    ports:
+      - "9094:9092"
+    command: ["/opt/kafka/bin/kafka-server-start.sh", "/opt/kafka/config/server.properties"]
+    environment:
+      - KAFKA_BROKER_ID=3
+      - KAFKA_ADVERTISED_HOST_NAME=kafka3
+    volumes:
+      - ${CONFIGS_DIR}/server.properties:/opt/kafka/config/server.properties
+      - ${APP_DATA_DIR}/kafka3:/var/lib/kafka/data
+    networks:
+      - big-data-network
+  
 networks:
   big-data-network:
     external: true

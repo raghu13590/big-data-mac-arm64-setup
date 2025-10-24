@@ -1,8 +1,8 @@
 micronaut:
   server:
-    port: 9093
+    port: 9091
 akhq:
   connections:
     docker-kafka-server:
       properties:
-        bootstrap.servers: "kafka:9092"
+        bootstrap.servers: "kafka1:9092,kafka2:9092,kafka3:9092"

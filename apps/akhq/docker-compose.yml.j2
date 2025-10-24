@@ -6,8 +6,8 @@
     image: tchiotludo/akhq:latest
     container_name: akhq
     ports:
-      - "9093:9093"
-    {{ healthcheck("curl -f http://localhost:9093/ || exit 1") | indent(4) }}
+      - "9091:9091"
+    {{ healthcheck("curl -f http://localhost:9091/ || exit 1") | indent(4) }}
     volumes:
       - ${CONFIGS_DIR}/application.yml:/app/application.yml
       - ${APP_DATA_DIR}:/app/volumes

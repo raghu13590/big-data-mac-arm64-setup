@@ -100,6 +100,7 @@ up-without-jinja2: ## Start all services without rendering
 
 up-minimal: ## Start services for this project only
 	@echo "$(GREEN)\nStarting services for $(SERVICE_NAME)...$(NC)"
+	@$(MAKE) render
 	@$(MAKE) init
 	$(DOCKER_COMPOSE) up -d
 	@echo "$(GREEN)Waiting for services to be healthy ($(SLEEP_SECS) seconds)...$(NC)"

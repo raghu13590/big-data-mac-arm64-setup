@@ -7,12 +7,12 @@ services:
     image: tchiotludo/akhq:latest
     container_name: akhq
     ports:
-      - "9093:9093"
+      - "9091:9091"
     healthcheck:
       interval: 30s
       timeout: 10s
       retries: 5
-      test: [ "CMD-SHELL", "curl -f http://localhost:9093/ || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:9091/ || exit 1" ]
     volumes:
       - ${CONFIGS_DIR}/application.yml:/app/application.yml
       - ${APP_DATA_DIR}:/app/volumes

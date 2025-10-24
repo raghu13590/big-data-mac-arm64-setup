@@ -29,14 +29,5 @@ RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_2.12-${KAF
     mv /opt/kafka_2.12-${KAFKA_VERSION} $KAFKA_HOME && \
     rm kafka_2.12-${KAFKA_VERSION}.tgz
 
-# Copy the entrypoint script and ensure correct permissions
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
 # Expose Kafka port
 EXPOSE 9092
-
-RUN echo "Listing files in $KAFKA_HOME/bin:" && ls -l "$KAFKA_HOME/bin"
-
-# Set the entrypoint
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
