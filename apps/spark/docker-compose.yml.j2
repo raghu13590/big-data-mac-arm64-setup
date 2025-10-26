@@ -31,7 +31,7 @@
       - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
       - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
     networks:
-      - ${BIG_DATA_NETWORK}
+      - {{ BIG_DATA_NETWORK }}
     command: ["spark-class", "org.apache.spark.deploy.master.Master", "--webui-port", "${SPARK_MASTER_WEBUI_PORT}"]
     {{ healthcheck('curl -f http://localhost:8072') | indent(4) }}
 
@@ -62,7 +62,7 @@
       - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
       - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
     networks:
-      - ${BIG_DATA_NETWORK}
+      - {{ BIG_DATA_NETWORK }}
     command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "{{ worker.webui_port }}"]
     {{ healthcheck('curl -f http://localhost:' ~ worker.port) | indent(4) }}
   {% endfor %}
@@ -80,7 +80,7 @@
       - ${CONFIGS_DIR}/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
       - ${APP_DATA_DIR}/history:/opt/spark/history
     networks:
-      - ${BIG_DATA_NETWORK}
+      - {{ BIG_DATA_NETWORK }}
     command: ["spark-class", "org.apache.spark.deploy.history.HistoryServer"]
     {{ healthcheck('curl -f http://localhost:18080') | indent(4) }}
 {% endblock %}

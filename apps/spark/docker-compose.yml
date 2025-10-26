@@ -27,7 +27,7 @@ services:
       - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
       - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
     networks:
-      - ${BIG_DATA_NETWORK}
+      - big-data-network
     command: ["spark-class", "org.apache.spark.deploy.master.Master", "--webui-port", "${SPARK_MASTER_WEBUI_PORT}"]
     healthcheck:
       interval: 30s
@@ -63,7 +63,7 @@ services:
       - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
       - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
     networks:
-      - ${BIG_DATA_NETWORK}
+      - big-data-network
     command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "${SPARK_WORKER_WEBUI_PORT_1}"]
     healthcheck:
       interval: 30s
@@ -98,7 +98,7 @@ services:
       - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
       - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
     networks:
-      - ${BIG_DATA_NETWORK}
+      - big-data-network
     command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "${SPARK_WORKER_WEBUI_PORT_2}"]
     healthcheck:
       interval: 30s
@@ -121,7 +121,7 @@ services:
       - ${CONFIGS_DIR}/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
       - ${APP_DATA_DIR}/history:/opt/spark/history
     networks:
-      - ${BIG_DATA_NETWORK}
+      - big-data-network
     command: ["spark-class", "org.apache.spark.deploy.history.HistoryServer"]
     healthcheck:
       interval: 30s
