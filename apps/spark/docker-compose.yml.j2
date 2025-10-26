@@ -1,9 +1,13 @@
+{% extends "base.yml.j2" %}
 
+{% set spark_workers = [
+    {"id": 1, "name": "spark-worker-1", "port": 8073, "webui_port": "${SPARK_WORKER_WEBUI_PORT_1}"},
+    {"id": 2, "name": "spark-worker-2", "port": 8075, "webui_port": "${SPARK_WORKER_WEBUI_PORT_2}"}
+] %}
 
-services:
+{% block services %}
   spark-master:
-    build:
-      context: ${BUILD_CONTEXT}
+    {{ build_context() | indent(4) }}
     container_name: spark-master
     ports:
       - "7077:7077"
@@ -29,26 +33,21 @@ services:
     networks:
       - ${BIG_DATA_NETWORK}
     command: ["spark-class", "org.apache.spark.deploy.master.Master", "--webui-port", "${SPARK_MASTER_WEBUI_PORT}"]
-    healthcheck:
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      test: [ "CMD-SHELL", "curl -f http://localhost:8072" ]
+    {{ healthcheck('curl -f http://localhost:8072') | indent(4) }}
 
-  
-  spark-worker-1:
-    build:
-      context: ${BUILD_CONTEXT}
-    container_name: spark-worker-1
+  {% for worker in spark_workers %}
+  {{ worker.name }}:
+    {{ build_context() | indent(4) }}
+    container_name: {{ worker.name }}
     environment:
-      - SPARK_WORKER_WEBUI_PORT=${SPARK_WORKER_WEBUI_PORT_1}
+      - SPARK_WORKER_WEBUI_PORT={{ worker.webui_port }}
       - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}
       - SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
       - SPARK_PUBLIC_DNS=${SPARK_PUBLIC_DNS}
       - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
       - ENABLE_DEBUG=${ENABLE_DEBUG}
     ports:
-      - "8073:8073"
+      - "{{ worker.port }}:{{ worker.port }}"
     depends_on:
       spark-master:
         condition: service_healthy
@@ -64,52 +63,12 @@ services:
       - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
     networks:
       - ${BIG_DATA_NETWORK}
-    command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "${SPARK_WORKER_WEBUI_PORT_1}"]
-    healthcheck:
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      test: [ "CMD-SHELL", "curl -f http://localhost:8073" ]
-  
-  spark-worker-2:
-    build:
-      context: ${BUILD_CONTEXT}
-    container_name: spark-worker-2
-    environment:
-      - SPARK_WORKER_WEBUI_PORT=${SPARK_WORKER_WEBUI_PORT_2}
-      - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}
-      - SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
-      - SPARK_PUBLIC_DNS=${SPARK_PUBLIC_DNS}
-      - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
-      - ENABLE_DEBUG=${ENABLE_DEBUG}
-    ports:
-      - "8075:8075"
-    depends_on:
-      spark-master:
-        condition: service_healthy
-    volumes:
-      - ${CONFIGS_DIR}/spark-env.sh:/opt/spark/conf/spark-env.sh
-      - ${CONFIGS_DIR}/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
-      - ${CONFIGS_DIR_HADOOP}/core-site.xml:/opt/hadoop-3.3.6/etc/hadoop/core-site.xml
-      - ${CONFIGS_DIR_HADOOP}/hdfs-site.xml:/opt/hadoop-3.3.6/etc/hadoop/hdfs-site.xml
-      - ${CONFIGS_DIR_HADOOP}/yarn-site.xml:/opt/hadoop-3.3.6/etc/hadoop/yarn-site.xml
-      - ${CONFIGS_DIR_HADOOP}/hive-site.xml:/opt/hive/hive-site.xml
-      - ${APP_DATA_DIR}/history:/opt/spark/history
-      - ${APP_DATA_DIR}/datasets:/opt/spark/datasets
-      - ${APP_DATA_DIR}/local-jars:/opt/spark/local-jars
-    networks:
-      - ${BIG_DATA_NETWORK}
-    command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "${SPARK_WORKER_WEBUI_PORT_2}"]
-    healthcheck:
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      test: [ "CMD-SHELL", "curl -f http://localhost:8075" ]
-  
+    command: ["spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "{{ worker.webui_port }}"]
+    {{ healthcheck('curl -f http://localhost:' ~ worker.port) | indent(4) }}
+  {% endfor %}
 
   spark-history:
-    build:
-      context: ${BUILD_CONTEXT}
+    {{ build_context() | indent(4) }}
     container_name: spark-history
     ports:
       - "18080:18080"
@@ -123,11 +82,5 @@ services:
     networks:
       - ${BIG_DATA_NETWORK}
     command: ["spark-class", "org.apache.spark.deploy.history.HistoryServer"]
-    healthcheck:
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      test: [ "CMD-SHELL", "curl -f http://localhost:18080" ]
-networks:
-  big-data-network:
-    external: true
+    {{ healthcheck('curl -f http://localhost:18080') | indent(4) }}
+{% endblock %}
