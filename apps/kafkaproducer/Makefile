@@ -9,8 +9,9 @@ SAMPLE_MESSAGE_FILE := $(SAMPLE_MESSAGE_DIR)/samplemessage.txt
 .PHONY: create-sample-message
 
 up:
+	@$(MAKE) render
 	@$(MAKE) dependencies
-	@$(MAKE) build-quick
+	@$(MAKE) build-no-cache
 	@$(MAKE) create-sample-message
 	@$(MAKE) up-service-health SERVICE=kafkaproducer
 

@@ -21,7 +21,7 @@ for topic in TOPICS:
 
 # Kafka producer setup
 producer = KafkaProducer(
-    bootstrap_servers='kafka:9092',
+    bootstrap_servers="kafka1:9092,kafka2:9092,kafka3:9092",
     value_serializer=lambda v: v.encode('utf-8')
 )
 

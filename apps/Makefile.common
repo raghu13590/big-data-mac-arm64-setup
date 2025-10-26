@@ -17,7 +17,7 @@
 #
 
 # Phony targets prevent conflicts with file names
-.PHONY: help build build-quick up up-minimal down down-volumes restart logs clean status ps health dependencies init debug-env debug-config
+.PHONY: help build build-no-cache up up-minimal down down-volumes restart logs clean status ps health dependencies init debug-env debug-config
 
 # Define colors for console output
 RED := $(shell tput setaf 1)

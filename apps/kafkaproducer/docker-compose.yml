@@ -1,22 +1,21 @@
-x-build-default: &build-default
-  build:
-    context: ${BUILD_CONTEXT}
 
-x-healthcheck-default: &healthcheck-default
-  interval: ${HEALTHCHECK_INTERVAL}
-  timeout: ${HEALTHCHECK_TIMEOUT}
-  retries: ${HEALTHCHECK_RETRIES}
 
 services:
   kafkaproducer:
-    <<: *build-default
+    build:
+      context: ${BUILD_CONTEXT}
     container_name: kafkaproducer
     ports:
       - "8085:8085"
     volumes:
       - ${APP_DATA_DIR}:/app/data
-    healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD-SHELL", "pgrep -f 'python /app/kafkaproducer.py' || exit 1"]
     networks:
-      - ${BIG_DATA_NETWORK}
+      - big-data-network
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "pgrep -f 'python /app/kafkaproducer.py' || exit 1" ]
+networks:
+  big-data-network:
+    external: true

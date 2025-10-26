@@ -1,0 +1,14 @@
+{% extends "base.yml.j2" %}
+
+{% block services %}
+  kafkaproducer:
+    {{ build_context() | indent(4) }}
+    container_name: kafkaproducer
+    ports:
+      - "8085:8085"
+    volumes:
+      - ${APP_DATA_DIR}:/app/data
+    networks:
+      - {{ BIG_DATA_NETWORK }}
+    {{ healthcheck("pgrep -f 'python /app/kafkaproducer.py' || exit 1") | indent(4)}}
+{% endblock %}
