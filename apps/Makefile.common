@@ -25,9 +25,6 @@ GREEN := $(shell tput setaf 2)
 YELLOW := $(shell tput setaf 3)
 NC := $(shell tput sgr0)
 
-# Export all variables to sub-makes
-.EXPORT_ALL_VARIABLES:
-
 # Load environment variables from .env if exists
 ifneq (,$(wildcard $(CURDIR)/.env))
     include $(CURDIR)/.env
@@ -64,7 +61,7 @@ ENV_SERVICE_FILE := $(abspath $(CURDIR)/.env)
 
 export APP_DATA_DIR CONFIGS_DIR SERVICE_NAME ENV_SERVICE_FILE CONFIGS_DIR_HADOOP
 
-SLEEP_SECS := 30
+SLEEP_SECS ?= 30
 
 # Default target
 all: help
@@ -96,11 +93,15 @@ up: ## Start all services, including dependencies
 
 up-without-jinja2: ## Start all services without rendering
 	@$(MAKE) dependencies
-	@$(MAKE) up-minimal
+	@$(MAKE) up-minimal-without-jinja2
 
 up-minimal: ## Start services for this project only
 	@echo "$(GREEN)\nStarting services for $(SERVICE_NAME)...$(NC)"
 	@$(MAKE) render
+	@$(MAKE) up-minimal-without-jinja2
+
+up-minimal-without-jinja2: ## Start services for this project only
+	@echo "$(GREEN)\nStarting services for $(SERVICE_NAME)...$(NC)"
 	@$(MAKE) init
 	$(DOCKER_COMPOSE) up -d
 	@echo "$(GREEN)Waiting for services to be healthy ($(SLEEP_SECS) seconds)...$(NC)"
