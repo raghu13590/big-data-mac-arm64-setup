@@ -19,9 +19,11 @@ TOPICS = ['your_topic']  # Add more topics as needed
 for topic in TOPICS:
     os.makedirs(os.path.join(DATA_DIR, topic), exist_ok=True)
 
+KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS')
+
 # Kafka producer setup
 producer = KafkaProducer(
-    bootstrap_servers="kafka1:9092,kafka2:9092,kafka3:9092",
+    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
     value_serializer=lambda v: v.encode('utf-8')
 )
 

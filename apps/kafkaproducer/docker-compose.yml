@@ -7,6 +7,8 @@ services:
     container_name: kafkaproducer
     ports:
       - "8085:8085"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9092,kafka3:9092
     volumes:
       - ${APP_DATA_DIR}:/app/data
     networks:

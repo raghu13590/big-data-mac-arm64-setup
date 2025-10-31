@@ -5,4 +5,4 @@ akhq:
   connections:
     docker-kafka-server:
       properties:
-        bootstrap.servers: "kafka1:9092,kafka2:9092,kafka3:9092"
+        bootstrap.servers: "${KAFKA_BOOTSTRAP_SERVERS}"
