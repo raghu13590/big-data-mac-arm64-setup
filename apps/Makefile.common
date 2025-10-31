@@ -101,7 +101,7 @@ up-minimal: ## Start services for this project only
 	@$(MAKE) render
 	@$(MAKE) up-minimal-without-jinja2
 
-up-minimal-without-jinja2: ## Start services for this project only
+up-minimal-without-jinja2: ## Start services for this project only without rendering and dependencies
 	@echo "$(GREEN)\nStarting services for $(SERVICE_NAME)...$(NC)"
 	@$(MAKE) init
 	$(DOCKER_COMPOSE) up -d
