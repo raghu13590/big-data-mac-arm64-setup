@@ -4,6 +4,7 @@
 include ../Makefile.common
 
 up:
+	@$(MAKE) render
 	@$(MAKE) dependencies
 	@$(MAKE) up-service-health SERVICE=jobmanager
 	@$(MAKE) up-service-health SERVICE=taskmanager

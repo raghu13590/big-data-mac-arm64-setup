@@ -1,0 +1,71 @@
+{% extends "base.yml.j2" %}
+
+{% set flink_build_args = {
+  "JAVA_HOME": JAVA_HOME,
+  "JAVA_VERSION": JAVA_VERSION,
+  "FLINK_VERSION": FLINK_VERSION,
+  "FLINK_HOME": FLINK_HOME,
+  "HADOOP_HOME": HADOOP_HOME,
+  "HADOOP_CONF_DIR": HADOOP_CONF_DIR,
+  "HADOOP_VERSION": HADOOP_VERSION,
+  "SCALA_VERSION": SCALA_VERSION,
+  "FLINK_LIB_PATH": FLINK_LIB_PATH,
+  "HADOOP_USER_NAME": HADOOP_USER_NAME
+} %}
+
+{% macro flink_env(role) -%}
+environment:
+  FLINK_PROPERTIES: {{ role }}.rpc.address:{{ role }}
+  HADOOP_HOME: {{ HADOOP_HOME }}
+  HADOOP_CONF_DIR: ${HADOOP_CONF_DIR}
+  JAVA_HOME: {{ JAVA_HOME }}
+{%- endmacro %}
+
+{% block services %}
+  jobmanager:
+    {{ build_context(args=flink_build_args) | indent(4) }}
+    {{ flink_env('jobmanager') | indent(4) }}
+    container_name: flink-jobmanager
+    ports:
+      - "${FLINK_JOBMANAGER_PORT}:${FLINK_JOBMANAGER_PORT}"
+    volumes:
+      - flink_jobmanager_data:${FLINK_HOME}/data
+      - flink_jobmanager_log:${FLINK_HOME}/log
+      - ${CONFIGS_DIR}/flink-conf.yaml:${FLINK_HOME}/conf/flink-conf.yaml
+      - ../configs/hadoop:${HADOOP_CONF_DIR}
+      - ${APP_DATA_DIR}/data:${FLINK_HOME}/datasets
+      - ${APP_DATA_DIR}/jars:${FLINK_HOME}/user-jars
+    command: ${FLINK_HOME}/bin/jobmanager.sh start-foreground
+    networks:
+      - {{ BIG_DATA_NETWORK }}
+    {{ healthcheck("curl -f " ~ FLINK_JOBMANAGER_HEALTHCHECK_URL ~ " || exit 1") | indent(4) }}
+
+  taskmanager:
+    {{ build_context(args=flink_build_args) | indent(4) }}
+    {{ flink_env('taskmanager') | indent(4) }}
+    container_name: flink-taskmanager
+    depends_on:
+      - jobmanager
+    volumes:
+      - flink_taskmanager_data:${FLINK_HOME}/data
+      - flink_taskmanager_log:${FLINK_HOME}/log
+      - ${CONFIGS_DIR}/flink-conf.yaml:${FLINK_HOME}/conf/flink-conf.yaml
+      - ../configs/hadoop:${HADOOP_CONF_DIR}
+      - ${APP_DATA_DIR}/data:${FLINK_HOME}/datasets
+      - ${APP_DATA_DIR}/jars:${FLINK_HOME}/user-jars
+    command: ${FLINK_HOME}/bin/taskmanager.sh start-foreground
+    networks:
+      - {{ BIG_DATA_NETWORK }}
+    {{ healthcheck("curl -sf " ~ FLINK_TASKMANAGER_HEALTHCHECK_URL ~ " | grep 'taskmanagers' || exit 1") | indent(4) }}
+{% endblock %}
+{% block volumes %}
+volumes:
+  flink_jobmanager_data:
+    driver: local
+  flink_taskmanager_data:
+    driver: local
+  flink_jobmanager_log:
+    driver: local
+  flink_taskmanager_log:
+    driver: local
+{% endblock %}

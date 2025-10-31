@@ -1,32 +1,28 @@
-x-build-default: &build-default
-  build:
-    context: ${BUILD_CONTEXT}
-    args:
-      - JAVA_HOME=${JAVA_HOME}
-      - JAVA_VERSION=${JAVA_VERSION}
-      - FLINK_VERSION=${FLINK_VERSION}
-      - FLINK_HOME=${FLINK_HOME}
-      - HADOOP_HOME=${HADOOP_HOME}
-      - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
-      - HADOOP_VERSION=${HADOOP_VERSION}
-      - SCALA_VERSION=${SCALA_VERSION}
-      - FLINK_LIB_PATH=${FLINK_LIB_PATH}
-      - HADOOP_USER_NAME=${HADOOP_USER_NAME}
 
-x-healthcheck-default: &healthcheck-default
-  interval: ${HEALTHCHECK_INTERVAL}
-  timeout: ${HEALTHCHECK_TIMEOUT}
-  retries: ${HEALTHCHECK_RETRIES}
 
 services:
   jobmanager:
-    <<: *build-default
+    build:
+      context: ${BUILD_CONTEXT}
+      args:
+        JAVA_HOME: /opt/java/openjdk
+        JAVA_VERSION: 11
+        FLINK_VERSION: 1.17.0
+        FLINK_HOME: /opt/flink
+        HADOOP_HOME: /opt/hadoop-3.3.6
+        HADOOP_CONF_DIR: /opt/hadoop-3.3.6/etc/hadoop
+        HADOOP_VERSION: 3.3.6
+        SCALA_VERSION: 2.12
+        FLINK_LIB_PATH: /opt/flink/lib
+        HADOOP_USER_NAME: hadoop
+    environment:
+      FLINK_PROPERTIES: jobmanager.rpc.address:jobmanager
+      HADOOP_HOME: /opt/hadoop-3.3.6
+      HADOOP_CONF_DIR: ${HADOOP_CONF_DIR}
+      JAVA_HOME: /opt/java/openjdk
     container_name: flink-jobmanager
     ports:
       - "${FLINK_JOBMANAGER_PORT}:${FLINK_JOBMANAGER_PORT}"
-    healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD-SHELL", "curl -f ${FLINK_JOBMANAGER_HEALTHCHECK_URL} || exit 1"]
     volumes:
       - flink_jobmanager_data:${FLINK_HOME}/data
       - flink_jobmanager_log:${FLINK_HOME}/log
@@ -34,23 +30,37 @@ services:
       - ../configs/hadoop:${HADOOP_CONF_DIR}
       - ${APP_DATA_DIR}/data:${FLINK_HOME}/datasets
       - ${APP_DATA_DIR}/jars:${FLINK_HOME}/user-jars
-    environment:
-      - FLINK_PROPERTIES=jobmanager.rpc.address:jobmanager
-      - HADOOP_HOME=${HADOOP_HOME}
-      - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
-      - JAVA_HOME=${JAVA_HOME}
     command: ${FLINK_HOME}/bin/jobmanager.sh start-foreground
     networks:
-      - ${BIG_DATA_NETWORK}
+      - big-data-network
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "curl -f http://localhost:8074 || exit 1" ]
 
   taskmanager:
-    <<: *build-default
+    build:
+      context: ${BUILD_CONTEXT}
+      args:
+        JAVA_HOME: /opt/java/openjdk
+        JAVA_VERSION: 11
+        FLINK_VERSION: 1.17.0
+        FLINK_HOME: /opt/flink
+        HADOOP_HOME: /opt/hadoop-3.3.6
+        HADOOP_CONF_DIR: /opt/hadoop-3.3.6/etc/hadoop
+        HADOOP_VERSION: 3.3.6
+        SCALA_VERSION: 2.12
+        FLINK_LIB_PATH: /opt/flink/lib
+        HADOOP_USER_NAME: hadoop
+    environment:
+      FLINK_PROPERTIES: taskmanager.rpc.address:taskmanager
+      HADOOP_HOME: /opt/hadoop-3.3.6
+      HADOOP_CONF_DIR: ${HADOOP_CONF_DIR}
+      JAVA_HOME: /opt/java/openjdk
     container_name: flink-taskmanager
     depends_on:
       - jobmanager
-    healthcheck:
-      <<: *healthcheck-default
-      test: ["CMD-SHELL", "curl -sf ${FLINK_TASKMANAGER_HEALTHCHECK_URL} | grep 'taskmanagers' || exit 1"]
     volumes:
       - flink_taskmanager_data:${FLINK_HOME}/data
       - flink_taskmanager_log:${FLINK_HOME}/log
@@ -58,15 +68,17 @@ services:
       - ../configs/hadoop:${HADOOP_CONF_DIR}
       - ${APP_DATA_DIR}/data:${FLINK_HOME}/datasets
       - ${APP_DATA_DIR}/jars:${FLINK_HOME}/user-jars
-    environment:
-      - FLINK_PROPERTIES=taskmanager.rpc.address:taskmanager
-      - HADOOP_HOME=${HADOOP_HOME}
-      - HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
-      - JAVA_HOME=${JAVA_HOME}
     command: ${FLINK_HOME}/bin/taskmanager.sh start-foreground
     networks:
-      - ${BIG_DATA_NETWORK}
-
+      - big-data-network
+    healthcheck:
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      test: [ "CMD-SHELL", "curl -sf http://jobmanager:8074/taskmanagers | grep 'taskmanagers' || exit 1" ]
+networks:
+  big-data-network:
+    external: true
 volumes:
   flink_jobmanager_data:
     driver: local
