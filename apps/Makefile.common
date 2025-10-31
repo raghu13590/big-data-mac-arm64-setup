@@ -90,6 +90,7 @@ up: ## Start all services, including dependencies
 	@$(MAKE) render
 	@$(MAKE) dependencies
 	@$(MAKE) up-minimal
+	@$(MAKE) test
 
 up-without-jinja2: ## Start all services without rendering
 	@$(MAKE) dependencies
@@ -151,6 +152,13 @@ status: ## List running services for this project
 	$(DOCKER_COMPOSE) ps
 
 ps: status ## Alias for status
+
+test:
+	@if [ -f "$(CURDIR)/tests.sh" ]; then \
+		$(CURDIR)/tests.sh; \
+	else \
+		echo "tests.sh not found in $(CURDIR), skipping tests."; \
+	fi
 
 health: ## Check the health status of all components
 	@echo "$(GREEN)Checking health status for $(SERVICE_NAME)...$(NC)"
