@@ -1,0 +1,123 @@
+{% extends "base.yml.j2" %}
+
+{% set pinot_build_args = {
+  "PINOT_VERSION": PINOT_VERSION
+} %}
+
+{% macro pinot_env(component, host, port, admin_port, instance_id) -%}
+environment:
+  - PINOT_COMPONENT={{ component }}
+  - ZK_ADDRESS={{ ZK_ADDRESS }}
+  - PINOT_CLUSTER_NAME={{ PINOT_CLUSTER_NAME }}
+  {%- if component == "controller" %}
+  - CONTROLLER_HOST={{ host }}
+  - CONTROLLER_PORT={{ port }}
+  - CONTROLLER_DATA_DIR=/var/pinot/controller/data
+  - CONTROLLER_VIP_HOST={{ host }}
+  - CONTROLLER_VIP_PORT={{ port }}
+  {%- elif component == "broker" %}
+  - BROKER_HOST={{ host }}
+  - BROKER_PORT={{ port }}
+  - BROKER_QUERY_PORT={{ port }}
+  - BROKER_INSTANCE_ID={{ instance_id }}
+  {%- elif component == "server" %}
+  - SERVER_HOST={{ host }}
+  - SERVER_PORT={{ port }}
+  - SERVER_ADMIN_PORT={{ admin_port }}
+  - SERVER_DATA_DIR=/var/pinot/server/data
+  - SERVER_SEGMENT_DIR=/var/pinot/server/data/segments
+  - SERVER_INSTANCE_ID={{ instance_id }}
+  {%- elif component == "minion" %}
+  - MINION_HOST={{ host }}
+  - MINION_PORT={{ port }}
+  - MINION_DATA_DIR=/var/pinot/minion/data
+  - MINION_INSTANCE_ID={{ instance_id }}
+  {%- endif %}
+{%- endmacro %}
+
+{% block services %}
+  pinot-controller:
+    {{ build_context(args=pinot_build_args) | indent(4) }}
+    container_name: pinot-controller
+    hostname: pinot-controller
+    ports:
+      {{ port_map(9000, 9000) }}
+    {{ pinot_env("controller", "pinot-controller", 9000, None, "") | indent(4) }}
+    volumes:
+      - ${APP_DATA_DIR}/controller/data:/var/pinot/controller/data
+      - ${APP_DATA_DIR}/controller/logs:/var/pinot/controller/logs
+    networks:
+      - {{ BIG_DATA_NETWORK }}
+    {{ healthcheck('curl -f http://localhost:9000/health') | indent(4) }}
+
+  pinot-broker:
+    {{ build_context(args=pinot_build_args) | indent(4) }}
+    container_name: pinot-broker
+    hostname: pinot-broker
+    ports:
+      {{ port_map(8099, 8099) }}
+    {{ pinot_env("broker", "pinot-broker", 8099, None, "Broker_pinot-broker_8099") | indent(4) }}
+    volumes:
+      - ${APP_DATA_DIR}/broker/logs:/var/pinot/broker/logs
+    depends_on:
+      pinot-controller:
+        condition: service_healthy
+    networks:
+      - {{ BIG_DATA_NETWORK }}
+    {{ healthcheck('curl -f http://localhost:8099/health') | indent(4) }}
+
+  pinot-server-1:
+    {{ build_context(args=pinot_build_args) | indent(4) }}
+    container_name: pinot-server-1
+    hostname: pinot-server-1
+    ports:
+      {{ port_map(8098, 8098) }}
+      {{ port_map(8097, 8097) }}  # Admin port
+    {{ pinot_env("server", "pinot-server-1", 8098, 8097, "Server_pinot-server-1_8098") | indent(4) }}
+    volumes:
+      - ${APP_DATA_DIR}/server1/data:/var/pinot/server/data
+      - ${APP_DATA_DIR}/server1/logs:/var/pinot/server/logs
+    depends_on:
+      pinot-broker:
+        condition: service_healthy
+    networks:
+      - {{ BIG_DATA_NETWORK }}
+    {{ healthcheck('curl -f http://localhost:8097/health') | indent(4) }}
+
+  pinot-server-2:
+    {{ build_context(args=pinot_build_args) | indent(4) }}
+    container_name: pinot-server-2
+    hostname: pinot-server-2
+    ports:
+      {{ port_map(8198, 8198) }}
+      {{ port_map(8197, 8097) }}  # Admin port
+    {{ pinot_env("server", "pinot-server-2", 8198, 8197, "Server_pinot-server-2_8198") | indent(4) }}
+    volumes:
+      - ${APP_DATA_DIR}/server2/data:/var/pinot/server/data
+      - ${APP_DATA_DIR}/server2/logs:/var/pinot/server/logs
+    depends_on:
+      pinot-broker:
+        condition: service_healthy
+    networks:
+      - {{ BIG_DATA_NETWORK }}
+    {{ healthcheck('curl -f http://localhost:8097/health') | indent(4) }}
+
+  pinot-minion:
+    {{ build_context(args=pinot_build_args) | indent(4) }}
+    container_name: pinot-minion
+    hostname: pinot-minion
+    ports:
+      {{ port_map(9514, 9514) }}
+    {{ pinot_env("minion", "pinot-minion", 9514, None, "Minion_pinot-minion_9514") | indent(4) }}
+    volumes:
+      - ${APP_DATA_DIR}/minion/data:/var/pinot/minion/data
+      - ${APP_DATA_DIR}/minion/logs:/var/pinot/minion/logs
+    depends_on:
+      pinot-server-1:
+        condition: service_healthy
+      pinot-server-2:
+        condition: service_healthy
+    networks:
+      - {{ BIG_DATA_NETWORK }}
+    {{ healthcheck('curl -f http://localhost:9514/health') | indent(4) }}
+{% endblock %}
